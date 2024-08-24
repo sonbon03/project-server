@@ -19,10 +19,11 @@ import { AuthorizeGuard } from 'src/utils/guards/authorization.guard';
 import { Roles } from 'src/utils/enums/user-roles.enum';
 
 @Controller('categories')
+@UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
-  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
+  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Post()
   async create(
     @Body() createCategoryDto: CreateCategoryDto,
@@ -31,28 +32,37 @@ export class CategoriesController {
     return await this.categoriesService.create(createCategoryDto, currentStore);
   }
 
-  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
+  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Get()
-  async findAll(): Promise<CategoryEntity[]> {
-    return await this.categoriesService.findAll();
+  async findAll(
+    @CurrentStore() currentStore: StoreEntity,
+  ): Promise<CategoryEntity[]> {
+    return await this.categoriesService.findAll(currentStore);
   }
 
-  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
+  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Get(':id')
-  async findOne(@Param('id') id: string): Promise<CategoryEntity> {
-    return await this.categoriesService.findOne(id);
+  async findOne(
+    @Param('id') id: string,
+    @CurrentStore() currentStore: StoreEntity,
+  ): Promise<CategoryEntity> {
+    return await this.categoriesService.findOne(id, currentStore);
   }
 
-  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
+  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Patch(':id')
   async update(
     @Param('id') id: string,
     @Body() updateCategoryDto: UpdateCategoryDto,
+    @CurrentStore() currentStore: StoreEntity,
   ): Promise<CategoryEntity> {
-    return await this.categoriesService.update(id, updateCategoryDto);
+    return await this.categoriesService.update(
+      id,
+      updateCategoryDto,
+      currentStore,
+    );
   }
 
-  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Delete(':id')
   async remove(@Param('id') id: string) {
     return await this.categoriesService.remove(id);

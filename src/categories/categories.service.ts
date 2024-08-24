@@ -18,7 +18,7 @@ export class CategoriesService {
   ): Promise<CategoryEntity> {
     const nameLower = createCategoryDto.name.toLowerCase();
     const categoryExists = await this.categoryRepository.find({
-      where: { name: nameLower },
+      where: { name: nameLower, store: { id: currentStore.id } },
     });
     if (categoryExists.length > 0)
       throw new BadRequestException('Category was exists');
@@ -29,13 +29,18 @@ export class CategoriesService {
     return category;
   }
 
-  async findAll(): Promise<CategoryEntity[]> {
-    return await this.categoryRepository.find();
+  async findAll(currentStore: StoreEntity): Promise<CategoryEntity[]> {
+    return await this.categoryRepository.find({
+      where: { store: { id: currentStore.id } },
+    });
   }
 
-  async findOne(id: string): Promise<CategoryEntity> {
+  async findOne(
+    id: string,
+    currentStore: StoreEntity,
+  ): Promise<CategoryEntity> {
     const category = await this.categoryRepository.findOne({
-      where: { id: id },
+      where: { id: id, store: { id: currentStore.id } },
     });
     if (!category) throw new BadRequestException('Category not found!');
     return category;
@@ -44,12 +49,13 @@ export class CategoriesService {
   async update(
     id: string,
     fields: Partial<UpdateCategoryDto>,
+    currentStore: StoreEntity,
   ): Promise<CategoryEntity> {
-    const category = await this.findOne(id);
+    const category = await this.findOne(id, currentStore);
     if (!category) throw new BadRequestException('Category not found!');
     const nameLower = fields.name.toLowerCase();
     const categoryExists = await this.categoryRepository.find({
-      where: { name: nameLower },
+      where: { name: nameLower, store: { id: currentStore.id } },
     });
     if (categoryExists) throw new BadRequestException('Category was exists');
     fields.name = nameLower;
@@ -59,7 +65,7 @@ export class CategoriesService {
   }
 
   async remove(id: string) {
-    const category = await this.findOne(id);
+    const category = await this.categoryRepository.findOneBy({ id });
     if (!category) throw new BadRequestException('Category not found!');
     return this.categoryRepository.delete(id);
   }

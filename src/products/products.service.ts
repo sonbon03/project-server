@@ -34,13 +34,17 @@ export class ProductsService {
   ) {
     const productEntity = new ProductEntity();
 
-    const check = await this.findName(createProductAttributeDto.product.name);
+    const check = await this.findName(
+      createProductAttributeDto.product.name,
+      currentStore,
+    );
     if (check !== null) {
       throw new BadRequestException('Name exists');
     }
     Object.assign(productEntity, createProductAttributeDto.product);
     const category = await this.categoryService.findOne(
       createProductAttributeDto.product.categoryId,
+      currentStore,
     );
     const warehouse = await this.warehouseService.findById(
       createProductAttributeDto.product.warehouseId,
@@ -79,8 +83,9 @@ export class ProductsService {
     return await this.findOneProductAttribute(productTbl.id);
   }
 
-  async findAll() {
+  async findAll(currentStore: StoreEntity) {
     const products = await this.productRepository.find({
+      where: { store: { id: currentStore.id } },
       relations: {
         category: true,
         store: true,
@@ -91,18 +96,18 @@ export class ProductsService {
     return products;
   }
 
-  async findName(name: string) {
+  async findName(name: string, currentStore: StoreEntity) {
     const nameProduct = name.toLowerCase();
     const product = await this.productRepository.findOne({
-      where: { name: nameProduct },
+      where: { name: nameProduct, store: { id: currentStore.id } },
     });
     if (!product) return null;
     return product.id;
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, currentStore: StoreEntity) {
     const product = await this.productRepository.find({
-      where: { id: id },
+      where: { id: id, store: { id: currentStore.id } },
       relations: {
         category: true,
         store: true,
@@ -143,7 +148,11 @@ export class ProductsService {
     return result;
   }
 
-  async update(id: string, fields: Partial<UpdateProductAttributeDto>) {
+  async update(
+    id: string,
+    fields: Partial<UpdateProductAttributeDto>,
+    currentStore: StoreEntity,
+  ) {
     const data = await this.findOneProductAttribute(id);
     Object.assign(data.product, fields.product);
     const product: ProductEntity = Object.assign(data.product, fields.product);
@@ -163,7 +172,7 @@ export class ProductsService {
     } else {
       Object.entries(fields.attributes).forEach(async ([key, attri]) => {
         if (Object.keys(data.attributes).length < Number(key) + 1) {
-          await this.addAttribute(attri, data.product.id);
+          await this.addAttribute(attri, data.product.id, currentStore);
         } else {
           const attribute: AttributeEntity = Object.assign(
             data.attributes[key],
@@ -180,9 +189,11 @@ export class ProductsService {
   async addAttribute(
     createAttributeDto: CreateAttributeDto,
     idProduct: string,
+    currentStore: StoreEntity,
   ) {
     const product = await this.productRepository.findOneBy({
       id: idProduct,
+      store: { id: currentStore.id },
     });
     if (!product) throw new BadRequestException('Product not found!');
     const attribute = await this.attributeRepository.save(
@@ -232,5 +243,22 @@ export class ProductsService {
     }
     const product = await this.productRepository.delete(idProduct);
     return product;
+  }
+
+  async addPromotion(id: string, promotion: PromotionEntity) {
+    const products = await this.productAttributeRepository.find({
+      where: {
+        product: {
+          id: id,
+        },
+      },
+    });
+    if (!products) {
+      throw new BadRequestException('Product not found');
+    }
+    for (let i = 0; i < products.length; i++) {
+      products[i].promotion = promotion;
+      await this.productAttributeRepository.save(products);
+    }
   }
 }

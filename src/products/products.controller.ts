@@ -18,10 +18,11 @@ import { ProductsService } from './products.service';
 import { UpdateProductAttributeDto } from './dto/update-product-attribute.dto';
 
 @Controller('products')
+@UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
-  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
+  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Post()
   async create(
     @Body() createProductAttributeDto: CreateProductAttributeDto,
@@ -34,32 +35,39 @@ export class ProductsController {
   }
 
   @Get()
-  findAll() {
-    return this.productsService.findAll();
+  async findAll(@CurrentStore() currentStore: StoreEntity) {
+    return await this.productsService.findAll(currentStore);
   }
 
-  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
+  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return await this.productsService.findOne(id);
+  async findOne(
+    @Param('id') id: string,
+    @CurrentStore() currentStore: StoreEntity,
+  ) {
+    return await this.productsService.findOne(id, currentStore);
   }
 
-  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
+  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Get('product-attribute/:id')
   async findOneProductAttribute(@Param('id') id: string) {
     return this.productsService.findOneProductAttribute(id);
   }
 
-  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
+  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Patch(':id')
   async update(
     @Param('id') id: string,
     @Body() updateProductDto: UpdateProductAttributeDto,
+    @CurrentStore() currentStore: StoreEntity,
   ) {
-    return await this.productsService.update(id, updateProductDto);
+    return await this.productsService.update(
+      id,
+      updateProductDto,
+      currentStore,
+    );
   }
 
-  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Delete(':id')
   async remove(@Param('id') id: string) {
     return await this.productsService.remove(id);

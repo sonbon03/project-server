@@ -18,8 +18,8 @@ export class CreatePromotionDto {
   quantity: number;
 
   @IsNotEmpty({ message: 'Promotion start day is not empty' })
-  start_day: Date;
+  startDay: Date;
 
   @IsNotEmpty({ message: 'Promotion end day is not empty' })
-  end_day: Date;
+  endDay: Date;
 }

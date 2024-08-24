@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { StoreEntity } from 'src/users/entities/store.entity';
-import { In, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { CreateWarehouseDto } from './dto/create-warehouse.dto';
 import { UpdateWarehouseDto } from './dto/update-warehouse.dto';
 import { WarehouseEntity } from './entities/warehouse.entity';
@@ -18,7 +18,7 @@ export class WarehousesService {
   ): Promise<any> {
     const upCase = createWarehouseDto.name.toUpperCase();
     const warehouseExit = await this.warehouseRepository.find({
-      where: { name: upCase },
+      where: { name: upCase, store: { id: currentStore.id } },
     });
     if (warehouseExit.length > 0)
       throw new BadRequestException('Warehouse was exists');
@@ -29,27 +29,39 @@ export class WarehousesService {
     return warehouse;
   }
 
-  async findAll() {
-    return await this.warehouseRepository.find();
+  async findAll(currentStore: StoreEntity) {
+    return await this.warehouseRepository.find({
+      where: { store: { id: currentStore.id } },
+    });
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, currentStore: StoreEntity) {
     const warehouse = await this.warehouseRepository.findOne({
-      where: { id: id },
+      where: {
+        id: id,
+        store: {
+          id: currentStore.id,
+        },
+      },
       relations: { store: true },
     });
     if (!warehouse) throw new BadRequestException('Warehouse not found!');
     return warehouse;
   }
 
-  async update(id: string, fields: Partial<UpdateWarehouseDto>): Promise<any> {
-    const warehouse = await this.findOne(id);
+  async update(
+    id: string,
+    fields: Partial<UpdateWarehouseDto>,
+    currentStore: StoreEntity,
+  ): Promise<any> {
+    const warehouse = await this.findOne(id, currentStore);
     Object.assign(warehouse, fields);
     return await this.warehouseRepository.save(warehouse);
   }
 
   async remove(id: string) {
-    const warehouse = await this.findOne(id);
+    const warehouse = await this.warehouseRepository.findOneBy({ id });
+    if (!warehouse) throw new BadRequestException('Warehouse not found');
     return await this.warehouseRepository.delete(id);
   }
 

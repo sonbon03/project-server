@@ -117,6 +117,7 @@ export class EmployeesService {
       where: {
         phone: data.phone,
         roles: role,
+        store: { id: currentUser.store.id },
       },
     });
     if (!phoneExists) throw new BadRequestException('Phone number was exists');

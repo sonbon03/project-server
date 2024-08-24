@@ -1,72 +1,101 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { CreatePromotionDto } from './dto/create-promotion.dto';
-import { UpdatePromotionDto } from './dto/update-promotion.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { PromotionEntity } from './entities/promotion.entity';
-import { Repository } from 'typeorm';
 import { ProductsService } from 'src/products/products.service';
 import { StoreEntity } from 'src/users/entities/store.entity';
+import { Repository } from 'typeorm';
+import { CreatePromotionDto } from './dto/create-promotion.dto';
+import { UpdatePromotionDto } from './dto/update-promotion.dto';
+import { PromotionEntity } from './entities/promotion.entity';
+import { ProductAttributeEntity } from 'src/products/entities/product-attribute.entity';
 
 @Injectable()
 export class PromotionService {
   constructor(
     @InjectRepository(PromotionEntity)
     private readonly promotionRepository: Repository<PromotionEntity>,
+    @InjectRepository(ProductAttributeEntity)
+    private readonly productAttributeRepository: Repository<ProductAttributeEntity>,
     private readonly productsService: ProductsService,
   ) {}
 
   async create(
     createPromotionDto: CreatePromotionDto,
     currentStore: StoreEntity,
-  ) {
-    if (createPromotionDto.start_day > createPromotionDto.end_day)
+  ): Promise<PromotionEntity> {
+    if (createPromotionDto.startDay > createPromotionDto.endDay)
       throw new BadRequestException(
         'The start day must be less than the end day',
       );
 
+    let promotion;
     for (let i = 0; i < createPromotionDto.product_id.length; i++) {
       const product = await this.productsService.findOneProductAttribute(
         createPromotionDto.product_id[i],
       );
       if (product.promotion === null) {
-        const promotion =
-          await this.promotionRepository.create(createPromotionDto);
+        promotion = await this.promotionRepository.create(createPromotionDto);
         promotion.store = currentStore;
-        await this.promotionRepository.save(promotion);
+        promotion = await this.promotionRepository.save(promotion);
+        await this.productsService.addPromotion(
+          createPromotionDto.product_id[i],
+          promotion,
+        );
       } else {
-        await this.update(product.promotion.id, product.product);
+        console.log(1);
+        promotion = await this.update(
+          product.promotion.id,
+          createPromotionDto,
+          currentStore,
+        );
       }
     }
-
-    return 'This action adds a new promotion';
+    return await this.findOne(promotion.id, currentStore);
   }
 
-  async findAll(currentStore: StoreEntity) {
+  async findAll(currentStore: StoreEntity): Promise<PromotionEntity[]> {
     return await this.promotionRepository.find({
       where: { store: { id: currentStore.id } },
-      relations: { store: true },
     });
   }
 
-  async findOne(id: string) {
-    const promotion = await this.promotionRepository.find({
-      where: { id },
+  async findOne(
+    id: string,
+    currentStore: StoreEntity,
+  ): Promise<PromotionEntity> {
+    const promotion = await this.promotionRepository.findOne({
+      where: { id: id, store: { id: currentStore.id } },
     });
     if (!promotion) throw new BadRequestException('Promotion not found');
     return promotion;
   }
 
-  async update(id: string, fields: Partial<UpdatePromotionDto>) {
-    const promotion = await this.promotionRepository.findOneBy({ id });
-
-    if (!promotion) throw new BadRequestException('Promotion not found!');
+  async update(
+    id: string,
+    fields: Partial<UpdatePromotionDto>,
+    currentStore: StoreEntity,
+  ): Promise<PromotionEntity> {
+    const promotion = await this.findOne(id, currentStore);
 
     Object.assign(promotion, fields);
+    promotion.store = currentStore;
 
-    return await this.promotionRepository.save(promotion);
+    const data = await this.promotionRepository.save(promotion);
+
+    return data;
   }
 
-  remove(id: string) {
-    return `This action removes a #${id} promotion`;
+  async remove(id: string) {
+    const promotion = await this.promotionRepository.findOneBy({ id });
+    if (!promotion) {
+      throw new Error(`Promotion không tồn tại`);
+    }
+    await this.productAttributeRepository
+      .createQueryBuilder()
+      .update(ProductAttributeEntity)
+      .set({ promotion: null })
+      .where('promotionId = :id', { id })
+      .execute();
+
+    return await this.promotionRepository.delete(id);
   }
 }

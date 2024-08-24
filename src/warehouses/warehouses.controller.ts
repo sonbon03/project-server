@@ -19,10 +19,11 @@ import { Roles } from 'src/utils/enums/user-roles.enum';
 import { AuthenticationGuard } from 'src/utils/guards/authentication.guard';
 
 @Controller('warehouses')
+@UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
 export class WarehousesController {
   constructor(private readonly warehousesService: WarehousesService) {}
 
-  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
+  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Post()
   async create(
     @Body() createWarehouseDto: CreateWarehouseDto,
@@ -34,28 +35,35 @@ export class WarehousesController {
     );
   }
 
-  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
+  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Get()
-  async findAll() {
-    return await this.warehousesService.findAll();
+  async findAll(@CurrentStore() currentStore: StoreEntity) {
+    return await this.warehousesService.findAll(currentStore);
   }
 
-  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
+  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return await this.warehousesService.findOne(id);
+  async findOne(
+    @Param('id') id: string,
+    @CurrentStore() currentStore: StoreEntity,
+  ) {
+    return await this.warehousesService.findOne(id, currentStore);
   }
 
-  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
+  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Patch(':id')
   async update(
     @Param('id') id: string,
     @Body() updateWarehouseDto: UpdateWarehouseDto,
+    @CurrentStore() currentStore: StoreEntity,
   ): Promise<any> {
-    return await this.warehousesService.update(id, updateWarehouseDto);
+    return await this.warehousesService.update(
+      id,
+      updateWarehouseDto,
+      currentStore,
+    );
   }
 
-  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Delete(':id')
   async remove(@Param('id') id: string) {
     return await this.warehousesService.remove(id);
