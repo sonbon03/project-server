@@ -15,6 +15,10 @@ import { ProductAttributeEntity } from './entities/product-attribute.entity';
 import { ProductEntity } from './entities/product.entity';
 import { CreateAttributeDto } from './dto/create-attribute.dto';
 import { PromotionEntity } from 'src/promotion/entities/promotion.entity';
+import {
+  StatusAttibute,
+  StatusPayment,
+} from 'src/utils/enums/user-status.enum';
 
 @Injectable()
 export class ProductsService {
@@ -74,7 +78,7 @@ export class ProductsService {
       productAttributeEntity.attribute = attributeTbl[i];
       paEntity.push(productAttributeEntity);
     }
-    const pa = await this.productAttributeRepository
+    await this.productAttributeRepository
       .createQueryBuilder()
       .insert()
       .into(ProductAttributeEntity)
@@ -106,7 +110,7 @@ export class ProductsService {
   }
 
   async findOne(id: string, currentStore: StoreEntity) {
-    const product = await this.productRepository.find({
+    const product = await this.productRepository.findOne({
       where: { id: id, store: { id: currentStore.id } },
       relations: {
         category: true,
@@ -115,6 +119,48 @@ export class ProductsService {
     });
     if (!product) throw new BadRequestException('Product not found!');
     return product;
+  }
+
+  async findAllProductPagination(
+    currentStore: StoreEntity,
+    page: number = 1,
+    limit: number = 10,
+  ) {
+    const skip = (page - 1) * limit;
+    const take = limit;
+
+    const [products, total] = await this.productRepository.findAndCount({
+      where: { store: { id: currentStore.id } },
+      skip,
+      take,
+      order: { createdAt: 'DESC' },
+    });
+    const result = await Promise.all(
+      products.map((product) => this.findOneProductAttribute(product.id)),
+    );
+    const totalPages = Math.ceil(total / limit);
+    return {
+      data: result,
+      currentPage: Number(page),
+      totalPages: totalPages,
+      totalItems: total,
+    };
+  }
+
+  async findOneAttribute(
+    id_attribute: string,
+    id_product: string,
+  ): Promise<ProductAttributeEntity> {
+    const attribute = await this.productAttributeRepository.findOne({
+      where: { product: { id: id_product }, attribute: { id: id_attribute } },
+      relations: {
+        attribute: true,
+        promotion: true,
+      },
+    });
+    if (!attribute)
+      throw new BadRequestException('Product attribute not found!');
+    return attribute;
   }
 
   async findOneProductAttribute(productId: string) {
@@ -129,7 +175,7 @@ export class ProductsService {
     if (!productAttribute || productAttribute.length === 0)
       throw new BadRequestException('ProductAttribute not found!');
 
-    let result: {
+    const result: {
       product: ProductEntity;
       attributes: {
         [key: number]: AttributeEntity;
@@ -260,5 +306,28 @@ export class ProductsService {
       products[i].promotion = promotion;
       await this.productAttributeRepository.save(products);
     }
+  }
+
+  async updateStock(
+    id_attribute: string,
+    id_product: string,
+    stock: number,
+    status: string,
+  ) {
+    let product = await this.findOneAttribute(id_attribute, id_product);
+    if (status === StatusPayment.PAID) {
+      if (product.attribute.amount < stock)
+        throw new BadRequestException('Insufficient product');
+      product.attribute.amount -= stock;
+      product.promotion.quantity -= 1;
+      if (product.attribute.amount === 0)
+        product.attribute.status === StatusAttibute.NOT;
+      if (product.promotion.quantity === 0) product.promotion = null;
+    } else {
+      product.attribute.amount += stock;
+    }
+    product = await this.productAttributeRepository.save(product);
+    console.log(product);
+    return product;
   }
 }

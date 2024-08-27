@@ -11,6 +11,7 @@ import { CurrentStoreMiddleware } from './utils/middlewares/current-store.middle
 import { CategoriesModule } from './categories/categories.module';
 import { ProductsModule } from './products/products.module';
 import { PromotionModule } from './promotion/promotion.module';
+import { OrdersModule } from './orders/orders.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { PromotionModule } from './promotion/promotion.module';
     CategoriesModule,
     ProductsModule,
     PromotionModule,
+    OrdersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

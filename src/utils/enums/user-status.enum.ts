@@ -8,3 +8,9 @@ export enum StatusAttibute {
   HAVE = 'have',
   NOT = 'not',
 }
+
+export enum StatusPayment {
+  PENDING = 'pending',
+  PAID = 'paid',
+  UNPAID = 'unpaid',
+}

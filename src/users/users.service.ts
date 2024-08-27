@@ -11,6 +11,7 @@ import { CreateUserStoreDto } from './dto/create-store-user.dto';
 import { SignInDto } from './dto/signin.dto';
 import { StoreEntity } from './entities/store.entity';
 import { UserEntity } from './entities/user.entity';
+import { Roles } from 'src/utils/enums/user-roles.enum';
 
 @Injectable()
 export class UsersService {
@@ -60,6 +61,30 @@ export class UsersService {
 
     delete userExists.password;
     return userExists;
+  }
+
+  async findStorePaginate(page: number = 1, limit: number = 10) {
+    const skip = (page - 1) * limit;
+    const take = limit;
+
+    const [result, total] = await this.usersRepository.findAndCount({
+      where: { roles: Roles.ADMIN },
+      relations: {
+        store: true,
+      },
+      skip,
+      take,
+      order: { createdAt: 'DESC' },
+    });
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: result,
+      currentPage: Number(page),
+      totalPages: totalPages,
+      totalItems: total,
+    };
   }
 
   async findAll() {

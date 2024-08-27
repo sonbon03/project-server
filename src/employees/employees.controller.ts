@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { EmployeesService } from './employees.service';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
@@ -43,6 +44,32 @@ export class EmployeesController {
     return await this.employeesService.createCustomer(
       createEmployeeDto,
       currentUser,
+    );
+  }
+
+  @Get('staff/paginate')
+  async findAllStaffPagination(
+    @CurrentStore() currentStore: StoreEntity,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+  ) {
+    return await this.employeesService.findAllStaffPagination(
+      currentStore,
+      page,
+      limit,
+    );
+  }
+
+  @Get('customer/paginate')
+  async findAllCustomerPagination(
+    @CurrentStore() currentStore: StoreEntity,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+  ) {
+    return await this.employeesService.findAllCustomerPagination(
+      currentStore,
+      page,
+      limit,
     );
   }
 

@@ -58,6 +58,32 @@ export class PromotionService {
     });
   }
 
+  async findAllPagination(
+    currentStore: StoreEntity,
+    page: number = 1,
+    limit: number = 10,
+  ) {
+    const skip = (page - 1) * limit;
+    const take = limit;
+
+    const [result, total] = await this.promotionRepository.findAndCount({
+      where: { store: { id: currentStore.id } },
+      relations: {
+        products: true,
+      },
+      skip,
+      take,
+      order: { createdAt: 'DESC' },
+    });
+    const totalPages = Math.ceil(total / limit);
+    return {
+      data: result,
+      currentPage: Number(page),
+      totalPages: totalPages,
+      totalItems: total,
+    };
+  }
+
   async findOne(
     id: string,
     currentStore: StoreEntity,

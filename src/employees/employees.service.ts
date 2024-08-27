@@ -48,6 +48,52 @@ export class EmployeesService {
     return staff;
   }
 
+  async findAllStaffPagination(
+    currentStore: StoreEntity,
+    page: number = 1,
+    limit: number = 10,
+  ) {
+    const skip = (page - 1) * limit;
+    const take = limit;
+
+    const [result, total] = await this.employeesRepository.findAndCount({
+      where: { roles: Roles.STAFF, store: { id: currentStore.id } },
+      skip,
+      take,
+      order: { createdAt: 'DESC' },
+    });
+    const totalPages = Math.ceil(total / limit);
+    return {
+      data: result,
+      currentPage: Number(page),
+      totalPages: totalPages,
+      totalItems: total,
+    };
+  }
+
+  async findAllCustomerPagination(
+    currentStore: StoreEntity,
+    page: number = 1,
+    limit: number = 10,
+  ) {
+    const skip = (page - 1) * limit;
+    const take = limit;
+
+    const [result, total] = await this.employeesRepository.findAndCount({
+      where: { roles: Roles.CUSTOMER, store: { id: currentStore.id } },
+      skip,
+      take,
+      order: { createdAt: 'DESC' },
+    });
+    const totalPages = Math.ceil(total / limit);
+    return {
+      data: result,
+      currentPage: Number(page),
+      totalPages: totalPages,
+      totalItems: total,
+    };
+  }
+
   async findAllCustomer(currentStore: StoreEntity): Promise<EmployeeEntity[]> {
     const customer = await this.employeesRepository.find({
       where: { roles: Roles.CUSTOMER, store: { id: currentStore.id } },
@@ -65,10 +111,12 @@ export class EmployeesService {
     return staff;
   }
 
-  async findOneCustomer(id: string, currentStore: StoreEntity): Promise<any> {
-    const customer = await this.employeesRepository.find({
+  async findOneCustomer(
+    id: string,
+    currentStore: StoreEntity,
+  ): Promise<EmployeeEntity> {
+    const customer = await this.employeesRepository.findOne({
       where: { roles: Roles.CUSTOMER, id: id, store: { id: currentStore.id } },
-      relations: { store: true },
     });
     if (!customer) throw new BadRequestException('Customer not found!!');
     return customer;
@@ -139,5 +187,13 @@ export class EmployeesService {
     employee.store = currentUser.store;
     employee = await this.employeesRepository.save(employee);
     return employee;
+  }
+
+  async updatePoint(point: number, id: string) {
+    const employee = await this.employeesRepository.findOneBy({ id: id });
+    if (!employee) throw new BadRequestException('Employee not found!!');
+    employee.point = Number(employee.point) + point;
+    employee.quantityOrder += 1;
+    return await this.employeesRepository.save(employee);
   }
 }

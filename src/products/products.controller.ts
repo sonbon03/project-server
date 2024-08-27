@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { StoreEntity } from 'src/users/entities/store.entity';
@@ -31,6 +32,19 @@ export class ProductsController {
     return await this.productsService.create(
       createProductAttributeDto,
       currentStore,
+    );
+  }
+
+  @Get('paginate')
+  async findAllProductPagination(
+    @CurrentStore() currentStore: StoreEntity,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+  ) {
+    return this.productsService.findAllProductPagination(
+      currentStore,
+      page,
+      limit,
     );
   }
 

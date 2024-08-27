@@ -1,3 +1,4 @@
+import { OrderEntity } from 'src/orders/entities/order.entity';
 import { StoreEntity } from 'src/users/entities/store.entity';
 import { Gender } from 'src/utils/enums/user-gender.enum';
 import { Roles } from 'src/utils/enums/user-roles.enum';
@@ -6,6 +7,7 @@ import {
   CreateDateColumn,
   Entity,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   Timestamp,
   UpdateDateColumn,
@@ -35,7 +37,7 @@ export class EmployeeEntity {
   @Column({ type: 'decimal', precision: 10, scale: 3 })
   salary: number;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  @Column({ type: 'decimal', precision: 10, scale: 3, default: 0 })
   point: number;
 
   @Column({ type: 'enum', enum: Roles })
@@ -52,4 +54,7 @@ export class EmployeeEntity {
 
   @ManyToOne(() => StoreEntity, (store) => store.employees, { cascade: true })
   store: StoreEntity;
+
+  @OneToMany(() => OrderEntity, (order) => order.employee)
+  orders: OrderEntity[];
 }

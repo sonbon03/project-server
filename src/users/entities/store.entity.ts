@@ -13,6 +13,7 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { UserEntity } from './user.entity';
 import { PromotionEntity } from 'src/promotion/entities/promotion.entity';
+import { OrderEntity } from 'src/orders/entities/order.entity';
 
 @Entity('stores')
 export class StoreEntity {
@@ -53,4 +54,7 @@ export class StoreEntity {
 
   @OneToMany(() => PromotionEntity, (prom) => prom.store)
   promotions: PromotionEntity[];
+
+  @OneToMany(() => OrderEntity, (order) => order.store)
+  orders: OrderEntity[];
 }

@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { PromotionService } from './promotion.service';
 import { CreatePromotionDto } from './dto/create-promotion.dto';
@@ -32,10 +33,22 @@ export class PromotionController {
   }
 
   @Get()
-  findAll(
+  async findAll(
     @CurrentStore() currentStore: StoreEntity,
   ): Promise<PromotionEntity[]> {
-    return this.promotionService.findAll(currentStore);
+    return await this.promotionService.findAll(currentStore);
+  }
+  @Get('paginate')
+  async findAllPagination(
+    @CurrentStore() currentStore: StoreEntity,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+  ) {
+    return await this.promotionService.findAllPagination(
+      currentStore,
+      page,
+      limit,
+    );
   }
 
   @Get(':id')

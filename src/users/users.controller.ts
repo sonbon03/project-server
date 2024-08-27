@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
@@ -30,7 +31,16 @@ export class UsersController {
   async signin(@Body() userSignInDto: SignInDto) {
     const user = await this.usersService.signin(userSignInDto);
     const accessToken = await this.usersService.accessToken(user);
-    return { user, accessToken };
+    return { accessToken, user };
+  }
+
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SUPERADMIN]))
+  @Get('paginate')
+  async findStorePaginate(
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+  ) {
+    return await this.usersService.findStorePaginate(page, limit);
   }
 
   @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SUPERADMIN]))
