@@ -27,8 +27,11 @@ export class OrderEntity {
   @Column()
   timeBuy: Date;
 
-  @Column()
+  @Column({ type: 'decimal', precision: 10, scale: 3 })
   total: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 3 })
+  moneyDiscount: number;
 
   @ManyToOne(() => StoreEntity, (store) => store.orders)
   store: StoreEntity;

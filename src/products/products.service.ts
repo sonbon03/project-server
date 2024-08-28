@@ -314,20 +314,23 @@ export class ProductsService {
     stock: number,
     status: string,
   ) {
+    console.log(id_attribute);
+    console.log(id_product);
     let product = await this.findOneAttribute(id_attribute, id_product);
     if (status === StatusPayment.PAID) {
       if (product.attribute.amount < stock)
         throw new BadRequestException('Insufficient product');
       product.attribute.amount -= stock;
-      product.promotion.quantity -= 1;
+      if (product.promotion) {
+        product.promotion.quantity -= 1;
+        if (product.promotion.quantity === 0) product.promotion = null;
+      }
       if (product.attribute.amount === 0)
         product.attribute.status === StatusAttibute.NOT;
-      if (product.promotion.quantity === 0) product.promotion = null;
     } else {
       product.attribute.amount += stock;
     }
     product = await this.productAttributeRepository.save(product);
-    console.log(product);
     return product;
   }
 }

@@ -14,6 +14,8 @@ import { OrderProductEntity } from './entities/order-product.entity';
 import { OrderEntity } from './entities/order.entity';
 import { PaymentEntity } from './entities/payment.entity';
 import { PaymentMethod } from 'src/utils/enums/payment-method.enum';
+import { VouchersService } from 'src/vouchers/vouchers.service';
+import { VoucherEnity } from 'src/vouchers/entities/voucher.entity';
 
 @Injectable()
 export class OrdersService {
@@ -24,6 +26,7 @@ export class OrdersService {
     private readonly orderRepository: Repository<OrderEntity>,
     private readonly productsService: ProductsService,
     private readonly employeesService: EmployeesService,
+    private readonly vouchersService: VouchersService,
   ) {}
   async create(createOrderDto: CreateOrderDto, currentStore: StoreEntity) {
     for (let i = 0; i < createOrderDto.products.length; i++) {
@@ -31,17 +34,48 @@ export class OrdersService {
         createOrderDto.products[i].id_attribute,
         createOrderDto.products[i].id_product,
       );
+      if (productAttribute.promotion) {
+        const price =
+          productAttribute.attribute.price *
+          (1 - productAttribute.promotion.percentage / 100);
+        if (price !== createOrderDto.products[i].price)
+          throw new BadRequestException('Incorrect billing for product');
+      }
+
       if (productAttribute.attribute.status === StatusAttibute.NOT) {
         throw new BadRequestException('Product out of stock');
       }
     }
+
+    const totalQuantity = createOrderDto.products.reduce(
+      (sum, product) => sum + product.quantity,
+      0,
+    );
+    let totalAmount = createOrderDto.products.reduce(
+      (sum, product) => sum + product.price * product.quantity,
+      0,
+    );
+    let voucher: VoucherEnity;
+    if (createOrderDto.id_voucher) {
+      voucher = await this.vouchersService.findOne(
+        createOrderDto.id_voucher,
+        currentStore,
+      );
+      totalAmount -= voucher?.money;
+    }
+
+    if (totalAmount !== createOrderDto.payment.total)
+      throw new BadRequestException('Incorrect billing for order');
+
     const payment = new PaymentEntity();
     Object.assign(payment, createOrderDto.payment);
     payment.paymentDate = new Date();
+
     const order = new OrderEntity();
     order.payment = payment;
     order.store = currentStore;
-    console.log(createOrderDto.id_user);
+    order.moneyDiscount = voucher?.money ? voucher.money : 0;
+
     if (createOrderDto.id_user) {
       const employee = await this.employeesService.findOneCustomer(
         createOrderDto.id_user,
@@ -52,14 +86,6 @@ export class OrdersService {
       order.employee = null;
     }
 
-    const totalQuantity = createOrderDto.products.reduce(
-      (sum, product) => sum + product.quantity,
-      0,
-    );
-    const totalAmount = createOrderDto.products.reduce(
-      (sum, product) => sum + product.price * product.quantity,
-      0,
-    );
     order.quantityProduct = totalQuantity;
     order.total = totalAmount;
     order.timeBuy = new Date();

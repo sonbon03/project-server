@@ -1,6 +1,6 @@
 import { Type } from 'class-transformer';
+import { IsOptional, IsString, ValidatePromise } from 'class-validator';
 import { CreateOrderProductDto } from './create-order-product.dto';
-import { IsString, ValidatePromise } from 'class-validator';
 import { CreatePaymentDto } from './create-payment.dto';
 
 export class CreateOrderDto {
@@ -12,6 +12,11 @@ export class CreateOrderDto {
   @ValidatePromise()
   payment: CreatePaymentDto;
 
+  @IsOptional()
+  @IsString()
+  id_voucher: string;
+
+  @IsOptional()
   @IsString()
   id_user: string;
 }
