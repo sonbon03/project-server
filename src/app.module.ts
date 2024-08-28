@@ -12,6 +12,7 @@ import { CategoriesModule } from './categories/categories.module';
 import { ProductsModule } from './products/products.module';
 import { PromotionModule } from './promotion/promotion.module';
 import { OrdersModule } from './orders/orders.module';
+import { VouchersModule } from './vouchers/vouchers.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { OrdersModule } from './orders/orders.module';
     ProductsModule,
     PromotionModule,
     OrdersModule,
+    VouchersModule,
   ],
   controllers: [AppController],
   providers: [AppService],
