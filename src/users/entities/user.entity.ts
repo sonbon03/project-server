@@ -29,7 +29,7 @@ export class UserEntity {
   @Column({ select: false })
   password: string;
 
-  @Column({ type: 'enum', enum: Roles, array: true, default: [Roles.ADMIN] })
+  @Column({ type: 'enum', enum: Roles, default: Roles.ADMIN })
   roles: Roles;
 
   @Column({ type: 'uuid', nullable: true })
@@ -38,4 +38,10 @@ export class UserEntity {
   @OneToOne(() => StoreEntity, (store) => store.user, { cascade: true })
   @JoinColumn({ name: 'storeId' })
   store: StoreEntity;
+
+  @Column({ type: 'uuid', nullable: true })
+  emailVerificationToken: string | null;
+
+  @Column({ default: false })
+  emailVerified: boolean;
 }

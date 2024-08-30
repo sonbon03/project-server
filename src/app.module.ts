@@ -13,6 +13,7 @@ import { ProductsModule } from './products/products.module';
 import { PromotionModule } from './promotion/promotion.module';
 import { OrdersModule } from './orders/orders.module';
 import { VouchersModule } from './vouchers/vouchers.module';
+import { MailService } from './mail/mail.service';
 
 @Module({
   imports: [
@@ -27,7 +28,7 @@ import { VouchersModule } from './vouchers/vouchers.module';
     VouchersModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, MailService],
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {

@@ -33,8 +33,7 @@ export class StoreEntity {
   @Column({
     type: 'enum',
     enum: Status,
-    array: true,
-    default: [Status.PENDING],
+    default: Status.PENDING,
   })
   status: Status;
 

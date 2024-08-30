@@ -34,6 +34,17 @@ export class UsersController {
     return { accessToken, user };
   }
 
+  @Get('verify')
+  async verifyEmail(@Query('token') token: string) {
+    const isValid = await this.usersService.verifyEmailToken(token);
+
+    if (isValid) {
+      return { message: 'Email verified successfully.' };
+    } else {
+      return { message: 'Invalid or expired token.' };
+    }
+  }
+
   @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SUPERADMIN]))
   @Get('paginate')
   async findStorePaginate(
@@ -43,19 +54,19 @@ export class UsersController {
     return await this.usersService.findStorePaginate(page, limit);
   }
 
-  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SUPERADMIN]))
+  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SUPERADMIN]))
   @Get()
   async findAll() {
     return await this.usersService.findAll();
   }
 
-  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SUPERADMIN]))
+  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SUPERADMIN]))
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return await this.usersService.findOne(id);
   }
 
-  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SUPERADMIN]))
+  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SUPERADMIN]))
   @Delete(':id')
   async remove(@Param('id') id: string): Promise<any[]> {
     return await this.usersService.remove(id);

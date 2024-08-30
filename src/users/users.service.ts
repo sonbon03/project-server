@@ -6,12 +6,15 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { compare, hash } from 'bcrypt';
 import { sign } from 'jsonwebtoken';
+import { MailService } from 'src/mail/mail.service';
+import { Roles } from 'src/utils/enums/user-roles.enum';
+import { Status } from 'src/utils/enums/user-status.enum';
 import { Repository } from 'typeorm';
+import { v4 as uuidv4 } from 'uuid';
 import { CreateUserStoreDto } from './dto/create-store-user.dto';
 import { SignInDto } from './dto/signin.dto';
 import { StoreEntity } from './entities/store.entity';
 import { UserEntity } from './entities/user.entity';
-import { Roles } from 'src/utils/enums/user-roles.enum';
 
 @Injectable()
 export class UsersService {
@@ -20,6 +23,7 @@ export class UsersService {
     private readonly usersRepository: Repository<UserEntity>,
     @InjectRepository(StoreEntity)
     private readonly storesRepository: Repository<StoreEntity>,
+    private readonly mailService: MailService,
   ) {}
 
   async signup(userCreateStore: CreateUserStoreDto): Promise<any> {
@@ -36,7 +40,18 @@ export class UsersService {
     let user = await this.usersRepository.create(userCreateStore.user);
     user.storeId = store.id;
     user.store = store;
+
+    const emailVerificationToken = uuidv4();
+    user.emailVerificationToken = emailVerificationToken;
+    user.emailVerified = false;
+
     user = await this.usersRepository.save(user);
+
+    await this.mailService.sendVerificationEmail(
+      user.email,
+      emailVerificationToken,
+    );
+
     delete user.password;
     return await user;
   }
@@ -174,5 +189,45 @@ export class UsersService {
       process.env.ACCESS_TOKEN_SECRET_KEY,
       { expiresIn: process.env.ACCESS_TOKEN_EXPIRE_TIME },
     );
+  }
+
+  async updateStatusStore(id: string, status: Status) {
+    const store = await this.storesRepository.findOne({
+      where: { id: id },
+    });
+    if (!store) throw new NotFoundException('Store is not found!');
+    if (store.status === Status.ACTIVE && status === Status.ACTIVE) {
+      throw new BadRequestException('Store was acvite');
+    }
+    if (
+      (store.status === Status.CANCEL || store.status === Status.PENDING) &&
+      status === Status.ACTIVE
+    ) {
+      console.log('1');
+      store.status = Status.ACTIVE;
+    }
+    console.log(store.status);
+    return await this.storesRepository.save(store);
+  }
+
+  async verifyEmailToken(token: string): Promise<boolean> {
+    const user = await this.usersRepository.findOne({
+      where: { emailVerificationToken: token },
+      relations: {
+        store: true,
+      },
+    });
+
+    if (!user || !user.emailVerificationToken) {
+      return false;
+    }
+
+    // Cập nhật trạng thái xác thực email
+    user.emailVerified = true;
+    user.emailVerificationToken = null; // Xóa token sau khi xác thực
+    await this.updateStatusStore(user.storeId, Status.ACTIVE);
+    await this.usersRepository.save(user);
+
+    return true;
   }
 }
