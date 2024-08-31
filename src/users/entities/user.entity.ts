@@ -11,6 +11,7 @@ import {
 } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { StoreEntity } from './store.entity';
+import { Status } from 'src/utils/enums/user-status.enum';
 
 @Entity('users')
 export class UserEntity {
@@ -44,4 +45,11 @@ export class UserEntity {
 
   @Column({ default: false })
   emailVerified: boolean;
+
+  @Column({
+    type: 'enum',
+    enum: Status,
+    default: Status.PENDING,
+  })
+  status: Status;
 }

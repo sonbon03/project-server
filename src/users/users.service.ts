@@ -113,7 +113,6 @@ export class UsersService {
           name: true,
           typeStore: true,
           address: true,
-          status: true,
         },
       },
     });
@@ -131,7 +130,6 @@ export class UsersService {
           name: true,
           typeStore: true,
           address: true,
-          status: true,
         },
       },
     });
@@ -191,24 +189,25 @@ export class UsersService {
     );
   }
 
-  async updateStatusStore(id: string, status: Status) {
-    const store = await this.storesRepository.findOne({
-      where: { id: id },
-    });
-    if (!store) throw new NotFoundException('Store is not found!');
-    if (store.status === Status.ACTIVE && status === Status.ACTIVE) {
-      throw new BadRequestException('Store was acvite');
-    }
-    if (
-      (store.status === Status.CANCEL || store.status === Status.PENDING) &&
-      status === Status.ACTIVE
-    ) {
-      console.log('1');
-      store.status = Status.ACTIVE;
-    }
-    console.log(store.status);
-    return await this.storesRepository.save(store);
-  }
+  // async updateStatusStore(id: string, status: Status): Promise<StoreEntity> {
+  //   const store = await this.storesRepository.findOne({
+  //     where: { id: id },
+  //   });
+  //   console.log(store);
+  //   if (!store) throw new NotFoundException('Store is not found!');
+  //   if (store.status === Status.ACTIVE && status === Status.ACTIVE) {
+  //     throw new BadRequestException('Store was acvite');
+  //   }
+  //   if (
+  //     (store.status === Status.CANCEL || store.status === Status.PENDING) &&
+  //     status === Status.ACTIVE
+  //   ) {
+  //     store.status = status;
+  //     console.log(1);
+  //   }
+
+  //   return await this.storesRepository.save(store);
+  // }
 
   async verifyEmailToken(token: string): Promise<boolean> {
     const user = await this.usersRepository.findOne({
@@ -223,9 +222,10 @@ export class UsersService {
     }
 
     // Cập nhật trạng thái xác thực email
+    user.status = Status.ACTIVE;
     user.emailVerified = true;
     user.emailVerificationToken = null; // Xóa token sau khi xác thực
-    await this.updateStatusStore(user.storeId, Status.ACTIVE);
+    // await this.updateStatusStore(user.store.id, Status.ACTIVE);
     await this.usersRepository.save(user);
 
     return true;
