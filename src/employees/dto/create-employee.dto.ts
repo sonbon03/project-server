@@ -36,7 +36,7 @@ export class CreateEmployeeDto {
 
   @IsOptional()
   @IsNumber()
-  point?: number;
+  point: number;
 
   @IsOptional()
   @IsNumber()

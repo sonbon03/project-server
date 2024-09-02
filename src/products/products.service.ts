@@ -101,6 +101,7 @@ export class ProductsService {
   }
 
   async findName(name: string, currentStore: StoreEntity) {
+    console.log(currentStore);
     const nameProduct = name.toLowerCase();
     const product = await this.productRepository.findOne({
       where: { name: nameProduct, store: { id: currentStore.id } },

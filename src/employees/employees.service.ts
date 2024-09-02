@@ -80,7 +80,7 @@ export class EmployeesService {
     const take = limit;
 
     const [result, total] = await this.employeesRepository.findAndCount({
-      where: { roles: Roles.CUSTOMER, store: { id: currentStore.id } },
+      where: { store: { id: currentStore.id } },
       skip,
       take,
       order: { createdAt: 'DESC' },
@@ -96,7 +96,7 @@ export class EmployeesService {
 
   async findAllCustomer(currentStore: StoreEntity): Promise<EmployeeEntity[]> {
     const customer = await this.employeesRepository.find({
-      where: { roles: Roles.CUSTOMER, store: { id: currentStore.id } },
+      where: { store: { id: currentStore.id } },
     });
     return customer;
   }
@@ -116,7 +116,7 @@ export class EmployeesService {
     currentStore: StoreEntity,
   ): Promise<EmployeeEntity> {
     const customer = await this.employeesRepository.findOne({
-      where: { roles: Roles.CUSTOMER, id: id, store: { id: currentStore.id } },
+      where: { id: id, store: { id: currentStore.id } },
     });
     if (!customer) throw new BadRequestException('Customer not found!!');
     return customer;
@@ -164,7 +164,6 @@ export class EmployeesService {
     const phoneExists = await this.employeesRepository.find({
       where: {
         phone: data.phone,
-        roles: role,
         store: { id: currentUser.store.id },
       },
     });

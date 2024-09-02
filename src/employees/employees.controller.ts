@@ -22,11 +22,10 @@ import { CurrentStore } from 'src/utils/decoratores/current-store.decoratore';
 import { StoreEntity } from 'src/users/entities/store.entity';
 
 @Controller('employees')
-@UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
+@UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.MODERATOR]))
 export class EmployeesController {
   constructor(private readonly employeesService: EmployeesService) {}
 
-  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Post('staff')
   async createStaff(
     @Body() createEmployeeDto: CreateEmployeeDto,
@@ -35,7 +34,6 @@ export class EmployeesController {
     return this.employeesService.createStaff(createEmployeeDto, currentUser);
   }
 
-  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Post('customer')
   async createCustomer(
     @Body() createEmployeeDto: CreateEmployeeDto,
@@ -73,7 +71,6 @@ export class EmployeesController {
     );
   }
 
-  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Get('staff')
   async findAllStaff(
     @CurrentStore() currentStore: StoreEntity,
@@ -81,7 +78,6 @@ export class EmployeesController {
     return await this.employeesService.findAllStaff(currentStore);
   }
 
-  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Get('customer')
   async findAllCustomer(
     @CurrentStore() currentStore: StoreEntity,
@@ -89,7 +85,6 @@ export class EmployeesController {
     return await this.employeesService.findAllCustomer(currentStore);
   }
 
-  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Get('staff/:id')
   async findOneStaff(
     @Param('id') id: string,
@@ -98,7 +93,6 @@ export class EmployeesController {
     return await this.employeesService.findOneStaff(id, currentStore);
   }
 
-  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Get('customer/:id')
   async findOneCustomer(
     @Param('id') id: string,
@@ -107,7 +101,6 @@ export class EmployeesController {
     return await this.employeesService.findOneCustomer(id, currentStore);
   }
 
-  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Patch('customer/:id')
   async updateCustomer(
     @Param('id') id: string,
@@ -121,7 +114,6 @@ export class EmployeesController {
     );
   }
 
-  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Patch('staff/:id')
   async updateStaff(
     @Param('id') id: string,
@@ -135,7 +127,6 @@ export class EmployeesController {
     );
   }
 
-  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Delete('customer/:id')
   async removeCustomer(@Param('id') id: string) {
     return await this.employeesService.removeCustomer(id);

@@ -18,7 +18,11 @@ export class CurrentStoreMiddleware implements NestMiddleware {
   constructor(private readonly usersService: UsersService) {}
   async use(req: Request, res: Response, next: NextFunction) {
     const authHeader = req.headers.authorization || req.headers.Authorization;
-    if (!authHeader || isArray(authHeader) || !authHeader.startsWith('API ')) {
+    if (
+      !authHeader ||
+      isArray(authHeader) ||
+      !authHeader.startsWith(`${process.env.ACCESS_TOKEN_TYPE} `)
+    ) {
       req.currentStore = null;
       next();
       return;

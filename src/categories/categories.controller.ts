@@ -19,7 +19,7 @@ import { AuthorizeGuard } from 'src/utils/guards/authorization.guard';
 import { Roles } from 'src/utils/enums/user-roles.enum';
 
 @Controller('categories')
-@UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
+@UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.MODERATOR]))
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 

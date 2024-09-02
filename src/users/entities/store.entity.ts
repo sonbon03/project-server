@@ -29,7 +29,7 @@ export class StoreEntity {
   @Column()
   address: string;
 
-  @OneToOne(() => UserEntity, (user) => user.store)
+  @OneToOne(() => UserEntity, (user) => user.store, { cascade: true })
   user: UserEntity;
 
   @OneToMany(() => EmployeeEntity, (emp) => emp.store)

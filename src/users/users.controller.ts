@@ -8,13 +8,16 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { UsersService } from './users.service';
-import { UserEntity } from './entities/user.entity';
-import { CreateUserStoreDto } from './dto/create-store-user.dto';
-import { SignInDto } from './dto/signin.dto';
+import { CurrentUser } from 'src/utils/decoratores/current-user.decoratore';
+import { Roles } from 'src/utils/enums/user-roles.enum';
 import { AuthenticationGuard } from 'src/utils/guards/authentication.guard';
 import { AuthorizeGuard } from 'src/utils/guards/authorization.guard';
-import { Roles } from 'src/utils/enums/user-roles.enum';
+import { AdminDto } from './dto/admin.dto';
+import { CreateUserStoreDto } from './dto/create-store-user.dto';
+import { SignInDto } from './dto/signin.dto';
+import { AdminEntity } from './entities/admin.entity';
+import { UserEntity } from './entities/user.entity';
+import { UsersService } from './users.service';
 
 @Controller('users')
 export class UsersController {
@@ -22,16 +25,17 @@ export class UsersController {
 
   @Post('signup')
   async signup(
-    @Body() userCreateStoreUser: CreateUserStoreDto,
+    @Body() adminCreateDto: AdminDto,
   ): Promise<{ user: UserEntity }> {
-    return { user: await this.usersService.signup(userCreateStoreUser) };
+    return { user: await this.usersService.signup(adminCreateDto) };
   }
 
   @Post('signin')
   async signin(@Body() userSignInDto: SignInDto) {
     const user = await this.usersService.signin(userSignInDto);
     const accessToken = await this.usersService.accessToken(user);
-    return { accessToken, user };
+    const type = process.env.ACCESS_TOKEN_TYPE;
+    return { accessToken, user, type };
   }
 
   @Get('verify')
@@ -45,7 +49,42 @@ export class UsersController {
     }
   }
 
-  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SUPERADMIN]))
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
+  @Post('moderator')
+  async createModerator(
+    @Body() createUserStoreDto: CreateUserStoreDto,
+    @CurrentUser() currentAdmin: AdminEntity,
+  ) {
+    return await this.usersService.createModerator(
+      createUserStoreDto,
+      currentAdmin,
+    );
+  }
+
+  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
+  // @Post('staff')
+  // async createStaff(
+  //   @Body() createStaff: UserDto,
+  //   @CurrentStore() currentStore: StoreEntity,
+  // ): Promise<UserEntity> {
+  //   return await this.usersService.createStaff(createStaff, currentStore);
+  // }
+
+  // @Get('staff')
+  // async getAllStaff(
+  //   @CurrentStore() currentStore: StoreEntity,
+  //   @Query('page') page: number = 1,
+  //   @Query('limit') limit: number = 10,
+  // ): Promise<{
+  //   data: UserEntity[];
+  //   currentPage: number;
+  //   totalPages: number;
+  //   totalItems: number;
+  // }> {
+  //   return await this.usersService.getAllStaff(currentStore, page, limit);
+  // }
+
+  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SUPERADMIN]))
   @Get('paginate')
   async findStorePaginate(
     @Query('page') page: number = 1,
@@ -60,7 +99,10 @@ export class UsersController {
     return await this.usersService.findAll();
   }
 
-  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SUPERADMIN]))
+  @UseGuards(
+    AuthenticationGuard,
+    AuthorizeGuard([Roles.SUPERADMIN, Roles.ADMIN]),
+  )
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return await this.usersService.findOne(id);

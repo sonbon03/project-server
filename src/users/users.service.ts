@@ -9,10 +9,13 @@ import { sign } from 'jsonwebtoken';
 import { MailService } from 'src/mail/mail.service';
 import { Roles } from 'src/utils/enums/user-roles.enum';
 import { Status } from 'src/utils/enums/user-status.enum';
+import { TypeCurrent } from 'src/utils/middlewares/current-user.middleware';
 import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
+import { AdminDto } from './dto/admin.dto';
 import { CreateUserStoreDto } from './dto/create-store-user.dto';
 import { SignInDto } from './dto/signin.dto';
+import { AdminEntity } from './entities/admin.entity';
 import { StoreEntity } from './entities/store.entity';
 import { UserEntity } from './entities/user.entity';
 
@@ -23,34 +26,41 @@ export class UsersService {
     private readonly usersRepository: Repository<UserEntity>,
     @InjectRepository(StoreEntity)
     private readonly storesRepository: Repository<StoreEntity>,
+    @InjectRepository(AdminEntity)
+    private readonly adminRepository: Repository<AdminEntity>,
     private readonly mailService: MailService,
   ) {}
 
-  async signup(userCreateStore: CreateUserStoreDto): Promise<any> {
-    const userExists = await this.findUserByEmail(userCreateStore.user.email);
+  async signup(adminCreateDto: AdminDto): Promise<any> {
+    const userExists = await this.findUserByEmail(adminCreateDto.email);
     if (userExists) {
       throw new BadRequestException('Email already exists');
     }
-    let store = await this.storesRepository.create(userCreateStore.store);
-    store = await this.storesRepository.save(store);
-    userCreateStore.user.password = await hash(
-      userCreateStore.user.password,
-      10,
-    );
-    let user = await this.usersRepository.create(userCreateStore.user);
-    user.storeId = store.id;
-    user.store = store;
+    adminCreateDto.password = await hash(adminCreateDto.password, 10);
 
+    const createAdmin = {
+      phone: adminCreateDto.phone,
+      name: adminCreateDto.name,
+    };
+
+    const admin = await this.adminRepository.create(createAdmin);
+    await this.adminRepository.save(admin);
+
+    const createUser = {
+      email: adminCreateDto.email,
+      password: adminCreateDto.password,
+      admin,
+    };
+    let user = await this.usersRepository.create(createUser);
     const emailVerificationToken = uuidv4();
     user.emailVerificationToken = emailVerificationToken;
-    user.emailVerified = false;
 
     user = await this.usersRepository.save(user);
 
-    await this.mailService.sendVerificationEmail(
-      user.email,
-      emailVerificationToken,
-    );
+    // await this.mailService.sendVerificationEmail(
+    //   user.email,
+    //   emailVerificationToken,
+    // );
 
     delete user.password;
     return await user;
@@ -60,7 +70,7 @@ export class UsersService {
     const userExists = await this.usersRepository
       .createQueryBuilder('users')
       .addSelect('users.password')
-      .leftJoinAndSelect('users.store', 'stores')
+      // .leftJoinAndSelect('users.store', 'stores')
       .where('users.email=:email', { email: userSignInDto.email })
       .getOne();
 
@@ -137,6 +147,30 @@ export class UsersService {
     return user;
   }
 
+  async findOneAdmin(id: string) {
+    const user = await this.usersRepository.findOne({
+      where: { id: id },
+    });
+
+    if (!user) throw new NotFoundException('User is not found!');
+    const admin = await this.adminRepository.findOne({
+      where: { id: user.admin?.id },
+      relations: {
+        users: true,
+      },
+    });
+    if (!admin) throw new NotFoundException('Admin is not found!');
+
+    const data: TypeCurrent = {
+      idAdmin: admin.id,
+      idUser: user.id,
+      idStore: user.store,
+      roles: user.roles,
+    };
+
+    return data;
+  }
+
   async findOneStore(id: string) {
     const user = await this.usersRepository.findOne({
       where: { id: id },
@@ -144,7 +178,7 @@ export class UsersService {
 
     if (!user) throw new NotFoundException('User is not found!');
     const store = await this.storesRepository.findOne({
-      where: { id: user.storeId },
+      where: { id: user?.storeId },
     });
     if (!store) throw new NotFoundException('Store is not found!');
 
@@ -169,7 +203,9 @@ export class UsersService {
   }
 
   async findUserByEmail(email: string) {
-    return await this.usersRepository.findOneBy({ email: email });
+    return await this.usersRepository.findOneBy({
+      email: email,
+    });
   }
 
   async getStore(idStore: string): Promise<any> {
@@ -221,13 +257,82 @@ export class UsersService {
       return false;
     }
 
-    // Cập nhật trạng thái xác thực email
     user.status = Status.ACTIVE;
-    user.emailVerified = true;
     user.emailVerificationToken = null; // Xóa token sau khi xác thực
-    // await this.updateStatusStore(user.store.id, Status.ACTIVE);
     await this.usersRepository.save(user);
 
     return true;
+  }
+
+  // async createStaff(
+  //   user: UserDto,
+  //   currentStore: StoreEntity,
+  // ): Promise<UserEntity> {
+  //   const findStaff = await this.usersRepository.findOneBy({
+  //     email: user.email,
+  //     store: { id: currentStore.id },
+  //   });
+  //   if (findStaff) throw new BadRequestException('Emaill was exists in store');
+  //   user.password = await hash(user.password, 10);
+  //   const staff = await this.usersRepository.create(user);
+  //   staff.roles = Roles.STAFF;
+  //   staff.store = currentStore;
+  //   delete staff.password;
+  //   return await this.usersRepository.save(staff);
+  // }
+
+  // async getAllStaff(
+  //   currentStore: StoreEntity,
+  //   page: number = 1,
+  //   limit: number = 10,
+  // ): Promise<{
+  //   data: UserEntity[];
+  //   currentPage: number;
+  //   totalPages: number;
+  //   totalItems: number;
+  // }> {
+  //   const skip = (page - 1) * limit;
+  //   const take = limit;
+
+  //   const [result, total] = await this.usersRepository.findAndCount({
+  //     where: { store: { id: currentStore.id }, roles: Roles.STAFF },
+  //     skip,
+  //     take,
+  //     order: { createdAt: 'DESC' },
+  //     relations: {
+  //       store: true,
+  //     },
+  //   });
+
+  //   const totalPages = Math.ceil(total / limit);
+  //   return {
+  //     data: result,
+  //     currentPage: Number(page),
+  //     totalPages: totalPages,
+  //     totalItems: total,
+  //   };
+  // }
+
+  async createModerator(
+    createUserStore: CreateUserStoreDto,
+    currentAdmin: AdminEntity,
+  ) {
+    const findEmail = await this.usersRepository.findOne({
+      where: { email: createUserStore.user.email },
+    });
+    if (findEmail) throw new BadRequestException('Email was exists');
+    const store = await this.storesRepository.create(createUserStore.store);
+    await this.storesRepository.save(store);
+    let user = await this.usersRepository.create(createUserStore.user);
+    user.password = await hash(user.password, 10);
+    user.roles = Roles.MODERATOR;
+    const admin = await this.adminRepository.findOne({
+      where: { id: currentAdmin.id },
+    });
+    user.admin = admin;
+    user.store = store;
+    user.storeId = store.id;
+    user = await this.usersRepository.save(user);
+    return user;
   }
 }
