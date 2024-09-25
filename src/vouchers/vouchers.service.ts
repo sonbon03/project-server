@@ -1,10 +1,10 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { StoreEntity } from 'src/users/entities/store.entity';
+import { LessThanOrEqual, Repository } from 'typeorm';
 import { CreateVoucherDto } from './dto/create-voucher.dto';
 import { UpdateVoucherDto } from './dto/update-voucher.dto';
-import { InjectRepository } from '@nestjs/typeorm';
 import { VoucherEnity } from './entities/voucher.entity';
-import { Repository } from 'typeorm';
-import { StoreEntity } from 'src/users/entities/store.entity';
 
 @Injectable()
 export class VouchersService {
@@ -14,7 +14,7 @@ export class VouchersService {
   ) {}
   async create(createVoucherDto: CreateVoucherDto, currentStore: StoreEntity) {
     const lowerNameVoucher = createVoucherDto.name.toLowerCase();
-    const findName = await this.vouchersRepository.find({
+    const findName = await this.vouchersRepository.findOne({
       where: { name: lowerNameVoucher },
     });
     if (findName) throw new BadRequestException('Voucher exists');
@@ -78,5 +78,17 @@ export class VouchersService {
     if (!voucher) throw new BadRequestException('Voucher not found');
 
     return await this.vouchersRepository.delete(voucher);
+  }
+
+  async getVouchersByTotal(total: number, currentStore: StoreEntity) {
+    const roundedTotal = Math.floor(total);
+    const vouchers = await this.vouchersRepository.find({
+      where: {
+        limit_money: LessThanOrEqual(roundedTotal),
+        store: { id: currentStore.id },
+      },
+      order: { money: 'DESC' },
+    });
+    return vouchers;
   }
 }

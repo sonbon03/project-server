@@ -37,7 +37,6 @@ export class ProductsService {
     currentStore: StoreEntity,
   ) {
     const productEntity = new ProductEntity();
-
     const check = await this.findName(
       createProductAttributeDto.product.name,
       currentStore,
@@ -64,9 +63,11 @@ export class ProductsService {
     const productTbl = await this.productRepository.save(productEntity);
     const attributeTbl: AttributeEntity[] = [];
     for (let i = 0; i < createProductAttributeDto.attributes.length; i++) {
-      const attri = await this.attributeRepository.save(
-        createProductAttributeDto.attributes[i],
-      );
+      const attribute = {
+        ...createProductAttributeDto.attributes[i],
+        status: StatusAttibute.HAVE,
+      };
+      const attri = await this.attributeRepository.save(attribute);
       attributeTbl.push(attri);
     }
 
@@ -101,7 +102,6 @@ export class ProductsService {
   }
 
   async findName(name: string, currentStore: StoreEntity) {
-    console.log(currentStore);
     const nameProduct = name.toLowerCase();
     const product = await this.productRepository.findOne({
       where: { name: nameProduct, store: { id: currentStore.id } },
@@ -141,7 +141,7 @@ export class ProductsService {
     );
     const totalPages = Math.ceil(total / limit);
     return {
-      data: result,
+      items: result,
       currentPage: Number(page),
       totalPages: totalPages,
       totalItems: total,
@@ -315,8 +315,6 @@ export class ProductsService {
     stock: number,
     status: string,
   ) {
-    console.log(id_attribute);
-    console.log(id_product);
     let product = await this.findOneAttribute(id_attribute, id_product);
     if (status === StatusPayment.PAID) {
       if (product.attribute.amount < stock)

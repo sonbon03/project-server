@@ -19,7 +19,7 @@ import { AuthorizeGuard } from 'src/utils/guards/authorization.guard';
 import { Roles } from 'src/utils/enums/user-roles.enum';
 
 @Controller('vouchers')
-@UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
+@UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.MODERATOR]))
 export class VouchersController {
   constructor(private readonly vouchersService: VouchersService) {}
 
@@ -31,7 +31,7 @@ export class VouchersController {
     return await this.vouchersService.create(createVoucherDto, currentStore);
   }
 
-  @Get()
+  @Get('paginate')
   async findAllPagination(
     @CurrentStore() currentStore: StoreEntity,
     @Query('page') page: number = 1,
@@ -42,6 +42,15 @@ export class VouchersController {
       page,
       limit,
     );
+  }
+
+  @Get('list_voucher')
+  getVouchersByTotal(
+    @Query('total') total: string,
+    @CurrentStore() currentStore: StoreEntity,
+  ) {
+    const totalAsNumber = Number(total);
+    return this.vouchersService.getVouchersByTotal(totalAsNumber, currentStore);
   }
 
   @Get()

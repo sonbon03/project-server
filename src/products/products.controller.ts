@@ -23,7 +23,6 @@ import { UpdateProductAttributeDto } from './dto/update-product-attribute.dto';
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
-  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Post()
   async create(
     @Body() createProductAttributeDto: CreateProductAttributeDto,
@@ -53,7 +52,6 @@ export class ProductsController {
     return await this.productsService.findAll(currentStore);
   }
 
-  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Get(':id')
   async findOne(
     @Param('id') id: string,
@@ -62,13 +60,11 @@ export class ProductsController {
     return await this.productsService.findOne(id, currentStore);
   }
 
-  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Get('product-attribute/:id')
   async findOneProductAttribute(@Param('id') id: string) {
     return this.productsService.findOneProductAttribute(id);
   }
 
-  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Patch(':id')
   async update(
     @Param('id') id: string,

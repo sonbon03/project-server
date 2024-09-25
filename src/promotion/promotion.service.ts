@@ -41,7 +41,6 @@ export class PromotionService {
           promotion,
         );
       } else {
-        console.log(1);
         promotion = await this.update(
           product.promotion.id,
           createPromotionDto,
@@ -77,7 +76,7 @@ export class PromotionService {
     });
     const totalPages = Math.ceil(total / limit);
     return {
-      data: result,
+      items: result,
       currentPage: Number(page),
       totalPages: totalPages,
       totalItems: total,

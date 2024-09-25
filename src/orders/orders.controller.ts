@@ -19,7 +19,7 @@ import { UpdatePaymentStatusDto } from './dto/update-payment-status.dto';
 import { OrdersService } from './orders.service';
 
 @Controller('orders')
-@UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
+@UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.MODERATOR]))
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 

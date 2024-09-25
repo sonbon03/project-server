@@ -1,10 +1,4 @@
-import {
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-  Min,
-} from 'class-validator';
+import { IsNotEmpty, IsNumber, IsString, Min } from 'class-validator';
 import { StatusAttibute } from 'src/utils/enums/user-status.enum';
 
 export class CreateAttributeDto {
@@ -21,7 +15,6 @@ export class CreateAttributeDto {
   @Min(1)
   amount: number;
 
-  @IsOptional()
   status: StatusAttibute;
 
   @IsNotEmpty({ message: 'Description not be empty' })

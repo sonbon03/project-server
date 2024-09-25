@@ -70,6 +70,11 @@ export class OrdersService {
     const payment = new PaymentEntity();
     Object.assign(payment, createOrderDto.payment);
     payment.paymentDate = new Date();
+    payment.status =
+      createOrderDto.payment.paymentMethod === PaymentMethod.CASH ||
+      createOrderDto.payment.paymentMethod === PaymentMethod.CARD
+        ? StatusPayment.PAID
+        : StatusPayment.PENDING;
 
     const order = new OrderEntity();
     order.payment = payment;
@@ -127,7 +132,9 @@ export class OrdersService {
       opEntity.push(orderProductEntity);
     }
 
-    await this.employeesService.updatePoint(point, createOrderDto.id_user);
+    if (createOrderDto.id_user) {
+      await this.employeesService.updatePoint(point, createOrderDto.id_user);
+    }
 
     await this.orderProductRepository
       .createQueryBuilder()
@@ -209,15 +216,14 @@ export class OrdersService {
   ) {
     const order = await this.findOne(id, currentStore);
     if (
-      (order.payment.paymentMethod === PaymentMethod.BANK_TRANSFER ||
+      (order.payment.paymentMethod === PaymentMethod.CARD ||
         order.payment.paymentMethod === PaymentMethod.CASH) &&
       order.payment.status === StatusPayment.PAID
     ) {
       throw new BadRequestException('Customer was payment');
     }
     if (
-      (order.payment.paymentMethod === PaymentMethod.BANK_TRANSFER ||
-        order.payment.paymentMethod === PaymentMethod.CASH) &&
+      order.payment.paymentMethod === PaymentMethod.BANK_TRANSFER &&
       updatePaymentStatusDto.status === StatusPayment.PAID
     ) {
       await this.updateStatus(order, StatusPayment.PAID);

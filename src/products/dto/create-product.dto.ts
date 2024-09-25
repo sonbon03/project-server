@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateProductDto {
   @IsNotEmpty({ message: 'Name not be empty' })
@@ -8,8 +8,9 @@ export class CreateProductDto {
   @IsNotEmpty({ message: 'Expiry day not be empty' })
   expiryDay: Date;
 
-  @IsNotEmpty({ message: 'Nanufacture day not be empty' })
-  manufactureDate: Date;
+  // @IsNotEmpty({ message: 'Nanufacture day not be empty' })
+  @IsOptional()
+  manufactureDate?: Date;
 
   @IsNotEmpty({ message: 'Measure not be empty' })
   @IsString()

@@ -3,8 +3,11 @@ import {
   Controller,
   Delete,
   Get,
+  HttpException,
+  HttpStatus,
   Param,
   Post,
+  Put,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -18,6 +21,9 @@ import { SignInDto } from './dto/signin.dto';
 import { AdminEntity } from './entities/admin.entity';
 import { UserEntity } from './entities/user.entity';
 import { UsersService } from './users.service';
+import { Status } from 'src/utils/enums/user-status.enum';
+import { UpdateStoreStatus } from './dto/update.store.dto';
+import { TypeCurrent } from 'src/utils/middlewares/current-user.middleware';
 
 @Controller('users')
 export class UsersController {
@@ -33,9 +39,21 @@ export class UsersController {
   @Post('signin')
   async signin(@Body() userSignInDto: SignInDto) {
     const user = await this.usersService.signin(userSignInDto);
+    if (user.status !== Status.ACTIVE) {
+      throw new HttpException(
+        {
+          statusCode: HttpStatus.UNAUTHORIZED,
+          message: 'Tài khoản của bạn chưa được kích hoạt.',
+          error: 'Unauthorized',
+        },
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
     const accessToken = await this.usersService.accessToken(user);
     const type = process.env.ACCESS_TOKEN_TYPE;
-    return { accessToken, user, type };
+    return {
+      data: { accessToken, user, type },
+    };
   }
 
   @Get('verify')
@@ -49,6 +67,14 @@ export class UsersController {
     }
   }
 
+  // @UseGuards(AuthenticationGuard)
+  // @Get('profile')
+  // async profile(@CurrentUser() currentAdmin: AdminEntity) {
+  //   const profile = await this.usersService.profile(currentAdmin);
+
+  //   return profile;
+  // }
+
   @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Post('moderator')
   async createModerator(
@@ -58,6 +84,37 @@ export class UsersController {
     return await this.usersService.createModerator(
       createUserStoreDto,
       currentAdmin,
+    );
+  }
+
+  @Get('moderator')
+  async getAllModerator(@CurrentUser() currentAdmin: TypeCurrent) {
+    return await this.usersService.getAllModerator(currentAdmin);
+  }
+
+  @Put('moderator/:id')
+  async updateStatusStore(
+    @Param('id') id: string,
+    @Body() updateStatusStore: UpdateStoreStatus,
+    @CurrentUser() currentAdmin: TypeCurrent,
+  ) {
+    return await this.usersService.updateStatusStore(
+      id,
+      updateStatusStore,
+      currentAdmin,
+    );
+  }
+
+  @Get('moderator/paginate')
+  async getModeratorPaginate(
+    @CurrentUser() currentAdmin: TypeCurrent,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+  ) {
+    return await this.usersService.getModeratorPaginate(
+      currentAdmin,
+      page,
+      limit,
     );
   }
 
@@ -84,7 +141,6 @@ export class UsersController {
   //   return await this.usersService.getAllStaff(currentStore, page, limit);
   // }
 
-  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SUPERADMIN]))
   @Get('paginate')
   async findStorePaginate(
     @Query('page') page: number = 1,
@@ -93,7 +149,6 @@ export class UsersController {
     return await this.usersService.findStorePaginate(page, limit);
   }
 
-  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SUPERADMIN]))
   @Get()
   async findAll() {
     return await this.usersService.findAll();

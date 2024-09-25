@@ -1,13 +1,12 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { UserEntity } from 'src/users/entities/user.entity';
+import { StoreEntity } from 'src/users/entities/store.entity';
 import { UsersService } from 'src/users/users.service';
 import { Roles } from 'src/utils/enums/user-roles.enum';
 import { Repository } from 'typeorm';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { EmployeeEntity } from './entities/employee.entity';
-import { StoreEntity } from 'src/users/entities/store.entity';
 
 @Injectable()
 export class EmployeesService {
@@ -19,24 +18,24 @@ export class EmployeesService {
 
   async createStaff(
     createEmployeeDto: CreateEmployeeDto,
-    currentUser: UserEntity,
+    currentStore: StoreEntity,
   ): Promise<EmployeeEntity> {
     const staff = await this.addCustomer(
       Roles.STAFF,
       createEmployeeDto,
-      currentUser,
+      currentStore,
     );
     return staff;
   }
 
   async createCustomer(
     createEmployeeDto: CreateEmployeeDto,
-    currentUser: UserEntity,
+    currentStore: StoreEntity,
   ): Promise<EmployeeEntity> {
     const customer = await this.addCustomer(
       Roles.CUSTOMER,
       createEmployeeDto,
-      currentUser,
+      currentStore,
     );
     return customer;
   }
@@ -64,7 +63,7 @@ export class EmployeesService {
     });
     const totalPages = Math.ceil(total / limit);
     return {
-      data: result,
+      items: result,
       currentPage: Number(page),
       totalPages: totalPages,
       totalItems: total,
@@ -80,14 +79,14 @@ export class EmployeesService {
     const take = limit;
 
     const [result, total] = await this.employeesRepository.findAndCount({
-      where: { store: { id: currentStore.id } },
+      where: { store: { id: currentStore.id }, roles: Roles.CUSTOMER },
       skip,
       take,
       order: { createdAt: 'DESC' },
     });
     const totalPages = Math.ceil(total / limit);
     return {
-      data: result,
+      items: result,
       currentPage: Number(page),
       totalPages: totalPages,
       totalItems: total,
@@ -102,7 +101,7 @@ export class EmployeesService {
   }
 
   async findOneStaff(id: string, currentStore: StoreEntity): Promise<any> {
-    const staff = await this.employeesRepository.find({
+    const staff = await this.employeesRepository.findOne({
       where: { roles: Roles.STAFF, id: id, store: { id: currentStore.id } },
       relations: { store: true },
     });
@@ -129,8 +128,18 @@ export class EmployeesService {
   ): Promise<EmployeeEntity> {
     const staff = await this.findOneStaff(id, currentStore);
     if (!staff) throw new BadRequestException('Staff not found!!');
+    const salary =
+      fields.salary !== undefined
+        ? parseFloat(fields.salary.toString())
+        : undefined;
+    if (salary !== undefined && (isNaN(salary) || salary > 99999999.999)) {
+      throw new BadRequestException('Salary value is out of range');
+    }
+
     Object.assign(staff, fields);
-    return staff;
+
+    const result = await this.employeesRepository.save(staff);
+    return result;
   }
 
   async updateCustomer(
@@ -141,7 +150,7 @@ export class EmployeesService {
     const customer = await this.findOneCustomer(id, currentStore);
     if (!customer) throw new BadRequestException('Customer not found!!');
     Object.assign(customer, fields);
-    return customer;
+    return await this.employeesRepository.save(customer);
   }
 
   async removeStaff(id: string) {
@@ -159,12 +168,12 @@ export class EmployeesService {
   async addCustomer(
     role: Roles,
     data: CreateEmployeeDto,
-    currentUser: UserEntity,
+    currentStore: StoreEntity,
   ) {
     const phoneExists = await this.employeesRepository.find({
       where: {
         phone: data.phone,
-        store: { id: currentUser.store.id },
+        store: { id: currentStore.id },
       },
     });
     if (!phoneExists) throw new BadRequestException('Phone number was exists');
@@ -183,7 +192,7 @@ export class EmployeesService {
       employee.salary = 0;
     }
     employee.roles = role;
-    employee.store = currentUser.store;
+    employee.store = currentStore;
     employee = await this.employeesRepository.save(employee);
     return employee;
   }

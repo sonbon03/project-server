@@ -32,6 +32,7 @@ export class CategoriesService {
   async findAll(currentStore: StoreEntity): Promise<CategoryEntity[]> {
     return await this.categoryRepository.find({
       where: { store: { id: currentStore.id } },
+      order: { createdAt: 'DESC' },
     });
   }
 
@@ -54,10 +55,12 @@ export class CategoriesService {
     const category = await this.findOne(id, currentStore);
     if (!category) throw new BadRequestException('Category not found!');
     const nameLower = fields.name.toLowerCase();
-    const categoryExists = await this.categoryRepository.find({
-      where: { name: nameLower, store: { id: currentStore.id } },
-    });
-    if (categoryExists) throw new BadRequestException('Category was exists');
+    if (category.name !== fields.name) {
+      const categoryExists = await this.categoryRepository.findOne({
+        where: { name: nameLower, store: { id: currentStore.id } },
+      });
+      if (categoryExists) throw new BadRequestException('Category was exists');
+    }
     fields.name = nameLower;
     Object.assign(category, fields);
 

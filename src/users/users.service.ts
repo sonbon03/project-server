@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  HttpException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -18,6 +19,7 @@ import { SignInDto } from './dto/signin.dto';
 import { AdminEntity } from './entities/admin.entity';
 import { StoreEntity } from './entities/store.entity';
 import { UserEntity } from './entities/user.entity';
+import { UpdateStoreStatus } from './dto/update.store.dto';
 
 @Injectable()
 export class UsersService {
@@ -57,10 +59,10 @@ export class UsersService {
 
     user = await this.usersRepository.save(user);
 
-    // await this.mailService.sendVerificationEmail(
-    //   user.email,
-    //   emailVerificationToken,
-    // );
+    await this.mailService.sendVerificationEmail(
+      user.email,
+      emailVerificationToken,
+    );
 
     delete user.password;
     return await user;
@@ -70,23 +72,36 @@ export class UsersService {
     const userExists = await this.usersRepository
       .createQueryBuilder('users')
       .addSelect('users.password')
-      // .leftJoinAndSelect('users.store', 'stores')
+      .leftJoinAndSelect('users.store', 'stores')
       .where('users.email=:email', { email: userSignInDto.email })
       .getOne();
 
-    if (!userExists) throw new BadRequestException('User not exists');
+    if (!userExists) throw new HttpException('User not exists', 422);
 
     const matchPassword = await compare(
       userSignInDto.password,
       userExists.password,
     );
     if (!matchPassword) {
-      throw new BadRequestException('Password is not true!');
+      throw new HttpException('Password is not true!', 422);
     }
 
+    const adminExists = await this.adminRepository.findOne({
+      where: { users: { id: userExists.id } },
+    });
     delete userExists.password;
-    return userExists;
+    const user = {
+      ...userExists,
+      name: !userExists.store
+        ? (adminExists?.name ?? '')
+        : userExists.store.name,
+    };
+    return user;
   }
+
+  // async profile(currentAdmin: AdminEntity) {
+
+  // }
 
   async findStorePaginate(page: number = 1, limit: number = 10) {
     const skip = (page - 1) * limit;
@@ -334,5 +349,75 @@ export class UsersService {
     user.storeId = store.id;
     user = await this.usersRepository.save(user);
     return user;
+  }
+
+  async getAllModerator(currentAdmin: TypeCurrent) {
+    console.log(currentAdmin);
+    const stores = await this.usersRepository.find({
+      where: {
+        admin: {
+          id: currentAdmin.idAdmin,
+        },
+        roles: Roles.MODERATOR,
+      },
+      relations: {
+        store: true,
+        admin: true,
+      },
+    });
+    return stores;
+  }
+
+  async getModeratorPaginate(
+    currentAdmin: TypeCurrent,
+    page: number = 1,
+    limit: number = 10,
+  ) {
+    const skip = (page - 1) * limit;
+    const take = limit;
+
+    const [result, total] = await this.usersRepository.findAndCount({
+      where: {
+        admin: {
+          id: currentAdmin.idAdmin,
+        },
+        roles: Roles.MODERATOR,
+      },
+      relations: {
+        store: true,
+        admin: true,
+      },
+      skip,
+      take,
+      order: {
+        createdAt: 'DESC',
+      },
+    });
+    const totalPages = Math.ceil(total / limit);
+    return {
+      items: result,
+      currentPage: Number(page),
+      totalPages: totalPages,
+      totalItems: total,
+    };
+  }
+
+  async updateStatusStore(
+    id: string,
+    updateStoreStatus: UpdateStoreStatus,
+    currentAdmin: TypeCurrent,
+  ) {
+    const store = await this.usersRepository.findOne({
+      where: {
+        id: id,
+        admin: { id: currentAdmin.idAdmin },
+      },
+    });
+    if (!store) {
+      throw new Error('Store not found');
+    }
+    store.status = updateStoreStatus.status;
+    const result = await this.usersRepository.save(store);
+    return result;
   }
 }

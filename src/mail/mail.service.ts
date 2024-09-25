@@ -18,7 +18,7 @@ export class MailService {
   }
 
   async sendVerificationEmail(to: string, token: string) {
-    const url = `http://localhost:8000/api/users/verify?token=${token}`;
+    const url = `http://localhost:3000/verify?token=${token}`;
 
     try {
       await this.transporter.sendMail({

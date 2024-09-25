@@ -19,11 +19,10 @@ import { Roles } from 'src/utils/enums/user-roles.enum';
 import { AuthenticationGuard } from 'src/utils/guards/authentication.guard';
 
 @Controller('warehouses')
-@UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
+@UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.MODERATOR]))
 export class WarehousesController {
   constructor(private readonly warehousesService: WarehousesService) {}
 
-  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Post()
   async create(
     @Body() createWarehouseDto: CreateWarehouseDto,
@@ -35,13 +34,11 @@ export class WarehousesController {
     );
   }
 
-  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Get()
   async findAll(@CurrentStore() currentStore: StoreEntity) {
     return await this.warehousesService.findAll(currentStore);
   }
 
-  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Get(':id')
   async findOne(
     @Param('id') id: string,
@@ -50,7 +47,6 @@ export class WarehousesController {
     return await this.warehousesService.findOne(id, currentStore);
   }
 
-  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Patch(':id')
   async update(
     @Param('id') id: string,

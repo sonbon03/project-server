@@ -23,7 +23,6 @@ import { Roles } from 'src/utils/enums/user-roles.enum';
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
-  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Post()
   async create(
     @Body() createCategoryDto: CreateCategoryDto,
@@ -32,7 +31,6 @@ export class CategoriesController {
     return await this.categoriesService.create(createCategoryDto, currentStore);
   }
 
-  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Get()
   async findAll(
     @CurrentStore() currentStore: StoreEntity,
@@ -40,7 +38,6 @@ export class CategoriesController {
     return await this.categoriesService.findAll(currentStore);
   }
 
-  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Get(':id')
   async findOne(
     @Param('id') id: string,
@@ -49,7 +46,6 @@ export class CategoriesController {
     return await this.categoriesService.findOne(id, currentStore);
   }
 
-  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Patch(':id')
   async update(
     @Param('id') id: string,

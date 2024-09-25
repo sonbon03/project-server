@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import {
   IsNotEmpty,
   IsNumber,
@@ -31,14 +32,17 @@ export class CreateEmployeeDto {
   phone: string;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   salary?: number;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
-  point: number;
+  point?: number;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   quantityOrder?: number;
 }

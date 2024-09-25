@@ -25,8 +25,8 @@ export class ProductEntity {
   @Column()
   expiryDay: Date;
 
-  @Column()
-  manufactureDate: string;
+  @Column({ type: 'date', nullable: true })
+  manufactureDate: Date | null;
 
   @Column()
   measure: string;

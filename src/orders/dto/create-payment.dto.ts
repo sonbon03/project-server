@@ -12,6 +12,6 @@ export class CreatePaymentDto {
   @IsNotEmpty({ message: 'Amount not be empty' })
   total: number;
 
-  @IsNotEmpty({ message: 'Status payment not be empty' })
+  // @IsNotEmpty({ message: 'Status payment not be empty' })
   status: StatusPayment;
 }

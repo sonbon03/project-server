@@ -12,8 +12,6 @@ import {
 import { EmployeesService } from './employees.service';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
-import { CurrentUser } from 'src/utils/decoratores/current-user.decoratore';
-import { UserEntity } from 'src/users/entities/user.entity';
 import { AuthenticationGuard } from '../utils/guards/authentication.guard';
 import { AuthorizeGuard } from 'src/utils/guards/authorization.guard';
 import { Roles } from 'src/utils/enums/user-roles.enum';
@@ -29,19 +27,19 @@ export class EmployeesController {
   @Post('staff')
   async createStaff(
     @Body() createEmployeeDto: CreateEmployeeDto,
-    @CurrentUser() currentUser: UserEntity,
+    @CurrentStore() currentStore: StoreEntity,
   ): Promise<EmployeeEntity> {
-    return this.employeesService.createStaff(createEmployeeDto, currentUser);
+    return this.employeesService.createStaff(createEmployeeDto, currentStore);
   }
 
   @Post('customer')
   async createCustomer(
     @Body() createEmployeeDto: CreateEmployeeDto,
-    @CurrentUser() currentUser: UserEntity,
+    @CurrentStore() currentStore: StoreEntity,
   ): Promise<EmployeeEntity> {
     return await this.employeesService.createCustomer(
       createEmployeeDto,
-      currentUser,
+      currentStore,
     );
   }
 

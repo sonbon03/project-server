@@ -2,11 +2,9 @@ import { Injectable, NestMiddleware } from '@nestjs/common';
 import { isArray } from 'class-validator';
 import { NextFunction, Request, Response } from 'express';
 import { verify } from 'jsonwebtoken';
-import { AdminEntity } from 'src/users/entities/admin.entity';
-import { UserEntity } from 'src/users/entities/user.entity';
+import { StoreEntity } from 'src/users/entities/store.entity';
 import { UsersService } from 'src/users/users.service';
 import { Roles } from '../enums/user-roles.enum';
-import { StoreEntity } from 'src/users/entities/store.entity';
 
 export interface TypeCurrent {
   idAdmin: string;
