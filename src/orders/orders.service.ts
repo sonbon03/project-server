@@ -16,6 +16,7 @@ import { PaymentEntity } from './entities/payment.entity';
 import { PaymentMethod } from 'src/utils/enums/payment-method.enum';
 import { VouchersService } from 'src/vouchers/vouchers.service';
 import { VoucherEnity } from 'src/vouchers/entities/voucher.entity';
+import { checkText } from 'src/utils/common/CheckText';
 
 @Injectable()
 export class OrdersService {
@@ -34,6 +35,9 @@ export class OrdersService {
         createOrderDto.products[i].id_attribute,
         createOrderDto.products[i].id_product,
       );
+      if (!checkText(productAttribute.attribute.key)) {
+        throw new BadRequestException('The name contains special characters');
+      }
       if (productAttribute.promotion) {
         const price =
           productAttribute.attribute.price *
@@ -55,6 +59,11 @@ export class OrdersService {
       (sum, product) => sum + product.price * product.quantity,
       0,
     );
+
+    if (totalAmount !== createOrderDto.payment.total) {
+      throw new BadRequestException('Incorrect billing for order');
+    }
+
     let voucher: VoucherEnity;
     if (createOrderDto.id_voucher) {
       voucher = await this.vouchersService.findOne(
@@ -63,9 +72,6 @@ export class OrdersService {
       );
       totalAmount -= voucher?.money;
     }
-
-    if (totalAmount !== createOrderDto.payment.total)
-      throw new BadRequestException('Incorrect billing for order');
 
     const payment = new PaymentEntity();
     Object.assign(payment, createOrderDto.payment);

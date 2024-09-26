@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { CategoryEntity } from './entities/category.entity';
 import { Repository } from 'typeorm';
 import { StoreEntity } from 'src/users/entities/store.entity';
+import { checkText } from 'src/utils/common/CheckText';
 
 @Injectable()
 export class CategoriesService {
@@ -22,6 +23,11 @@ export class CategoriesService {
     });
     if (categoryExists.length > 0)
       throw new BadRequestException('Category was exists');
+    if (!checkText(createCategoryDto.name)) {
+      throw new BadRequestException(
+        'The category name contains special characters',
+      );
+    }
     createCategoryDto.name = nameLower;
     let category = await this.categoryRepository.create(createCategoryDto);
     category.store = currentStore;

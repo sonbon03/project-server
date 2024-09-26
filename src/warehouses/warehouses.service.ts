@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { CreateWarehouseDto } from './dto/create-warehouse.dto';
 import { UpdateWarehouseDto } from './dto/update-warehouse.dto';
 import { WarehouseEntity } from './entities/warehouse.entity';
+import { checkText } from 'src/utils/common/CheckText';
 
 @Injectable()
 export class WarehousesService {
@@ -16,6 +17,11 @@ export class WarehousesService {
     createWarehouseDto: CreateWarehouseDto,
     currentStore: StoreEntity,
   ): Promise<any> {
+    if (!checkText(createWarehouseDto.name)) {
+      throw new BadRequestException(
+        'The category name contains special characters',
+      );
+    }
     const upCase = createWarehouseDto.name.toUpperCase();
     const warehouseExit = await this.warehouseRepository.find({
       where: { name: upCase, store: { id: currentStore.id } },

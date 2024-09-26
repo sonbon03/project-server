@@ -5,6 +5,7 @@ import { LessThanOrEqual, Repository } from 'typeorm';
 import { CreateVoucherDto } from './dto/create-voucher.dto';
 import { UpdateVoucherDto } from './dto/update-voucher.dto';
 import { VoucherEnity } from './entities/voucher.entity';
+import { checkText } from 'src/utils/common/CheckText';
 
 @Injectable()
 export class VouchersService {
@@ -13,6 +14,11 @@ export class VouchersService {
     private readonly vouchersRepository: Repository<VoucherEnity>,
   ) {}
   async create(createVoucherDto: CreateVoucherDto, currentStore: StoreEntity) {
+    if (!checkText(createVoucherDto.name)) {
+      throw new BadRequestException(
+        'The voucher name contains special characters',
+      );
+    }
     const lowerNameVoucher = createVoucherDto.name.toLowerCase();
     const findName = await this.vouchersRepository.findOne({
       where: { name: lowerNameVoucher },

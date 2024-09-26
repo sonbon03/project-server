@@ -7,6 +7,7 @@ import { CreatePromotionDto } from './dto/create-promotion.dto';
 import { UpdatePromotionDto } from './dto/update-promotion.dto';
 import { PromotionEntity } from './entities/promotion.entity';
 import { ProductAttributeEntity } from 'src/products/entities/product-attribute.entity';
+import { checkText } from 'src/utils/common/CheckText';
 
 @Injectable()
 export class PromotionService {
@@ -26,7 +27,11 @@ export class PromotionService {
       throw new BadRequestException(
         'The start day must be less than the end day',
       );
-
+    if (!checkText(createPromotionDto.name)) {
+      throw new BadRequestException(
+        'The promotion contains special characters',
+      );
+    }
     let promotion;
     for (let i = 0; i < createPromotionDto.product_id.length; i++) {
       const product = await this.productsService.findOneProductAttribute(
@@ -107,6 +112,33 @@ export class PromotionService {
     const data = await this.promotionRepository.save(promotion);
 
     return data;
+  }
+
+  async checkTimePromotion(id: string) {
+    const promotion = await this.productAttributeRepository.find({
+      where: { promotion: { id: id } },
+      relations: {
+        promotion: true,
+        product: true,
+      },
+    });
+    if (!promotion) {
+      throw new BadRequestException('Promotion not found');
+    } else {
+      const now = new Date();
+      promotion.map(async (item) => {
+        const start = new Date(item.promotion.startDay);
+        const end = new Date(item.promotion.endDay);
+        if (now > end) {
+          await this.productsService.updatePromotion(item.id);
+          return [];
+        }
+        if (now < start) {
+          throw new BadRequestException('Promotion not start yet');
+        }
+      });
+      return { data: promotion };
+    }
   }
 
   async remove(id: string) {

@@ -20,6 +20,7 @@ import { AdminEntity } from './entities/admin.entity';
 import { StoreEntity } from './entities/store.entity';
 import { UserEntity } from './entities/user.entity';
 import { UpdateStoreStatus } from './dto/update.store.dto';
+import { checkText } from 'src/utils/common/CheckText';
 
 @Injectable()
 export class UsersService {
@@ -332,10 +333,16 @@ export class UsersService {
     createUserStore: CreateUserStoreDto,
     currentAdmin: AdminEntity,
   ) {
+    if (!checkText(createUserStore.store.name)) {
+      throw new BadRequestException(
+        'The category name contains special characters',
+      );
+    }
     const findEmail = await this.usersRepository.findOne({
       where: { email: createUserStore.user.email },
     });
     if (findEmail) throw new BadRequestException('Email was exists');
+
     const store = await this.storesRepository.create(createUserStore.store);
     await this.storesRepository.save(store);
     let user = await this.usersRepository.create(createUserStore.user);

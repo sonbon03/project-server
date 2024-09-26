@@ -1,12 +1,13 @@
-import { Module } from '@nestjs/common';
-import { ProductsService } from './products.service';
-import { ProductsController } from './products.controller';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ProductEntity } from './entities/product.entity';
-import { ProductAttributeEntity } from './entities/product-attribute.entity';
-import { AttributeEntity } from './entities/attribute.entity';
 import { CategoriesModule } from 'src/categories/categories.module';
+import { PromotionModule } from 'src/promotion/promotion.module';
 import { WarehousesModule } from 'src/warehouses/warehouses.module';
+import { AttributeEntity } from './entities/attribute.entity';
+import { ProductAttributeEntity } from './entities/product-attribute.entity';
+import { ProductEntity } from './entities/product.entity';
+import { ProductsController } from './products.controller';
+import { ProductsService } from './products.service';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { WarehousesModule } from 'src/warehouses/warehouses.module';
     ]),
     CategoriesModule,
     WarehousesModule,
+    forwardRef(() => PromotionModule),
   ],
   controllers: [ProductsController],
   providers: [ProductsService],

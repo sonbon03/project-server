@@ -7,6 +7,7 @@ import { Repository } from 'typeorm';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { EmployeeEntity } from './entities/employee.entity';
+import { checkText } from 'src/utils/common/CheckText';
 
 @Injectable()
 export class EmployeesService {
@@ -20,7 +21,7 @@ export class EmployeesService {
     createEmployeeDto: CreateEmployeeDto,
     currentStore: StoreEntity,
   ): Promise<EmployeeEntity> {
-    const staff = await this.addCustomer(
+    const staff = await this.addEmployees(
       Roles.STAFF,
       createEmployeeDto,
       currentStore,
@@ -32,7 +33,7 @@ export class EmployeesService {
     createEmployeeDto: CreateEmployeeDto,
     currentStore: StoreEntity,
   ): Promise<EmployeeEntity> {
-    const customer = await this.addCustomer(
+    const customer = await this.addEmployees(
       Roles.CUSTOMER,
       createEmployeeDto,
       currentStore,
@@ -165,7 +166,7 @@ export class EmployeesService {
     return await this.employeesRepository.delete(id);
   }
 
-  async addCustomer(
+  async addEmployees(
     role: Roles,
     data: CreateEmployeeDto,
     currentStore: StoreEntity,
@@ -177,6 +178,9 @@ export class EmployeesService {
       },
     });
     if (!phoneExists) throw new BadRequestException('Phone number was exists');
+    if (!checkText(data.firstName) || !checkText(data.lastName)) {
+      throw new BadRequestException('The name contains special characters');
+    }
     if (
       (data.salary === 0 || data.salary < 0 || !data.salary) &&
       role === Roles.STAFF

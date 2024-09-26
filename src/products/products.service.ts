@@ -1,24 +1,27 @@
 import {
   BadRequestException,
+  forwardRef,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CategoriesService } from 'src/categories/categories.service';
+import { PromotionEntity } from 'src/promotion/entities/promotion.entity';
 import { StoreEntity } from 'src/users/entities/store.entity';
+import {
+  StatusAttibute,
+  StatusPayment,
+} from 'src/utils/enums/user-status.enum';
 import { WarehousesService } from 'src/warehouses/warehouses.service';
 import { Repository } from 'typeorm';
+import { CreateAttributeDto } from './dto/create-attribute.dto';
 import { CreateProductAttributeDto } from './dto/create-product-attribute.dto';
 import { UpdateProductAttributeDto } from './dto/update-product-attribute.dto';
 import { AttributeEntity } from './entities/attribute.entity';
 import { ProductAttributeEntity } from './entities/product-attribute.entity';
 import { ProductEntity } from './entities/product.entity';
-import { CreateAttributeDto } from './dto/create-attribute.dto';
-import { PromotionEntity } from 'src/promotion/entities/promotion.entity';
-import {
-  StatusAttibute,
-  StatusPayment,
-} from 'src/utils/enums/user-status.enum';
+import { PromotionService } from 'src/promotion/promotion.service';
 
 @Injectable()
 export class ProductsService {
@@ -31,6 +34,8 @@ export class ProductsService {
     private readonly productAttributeRepository: Repository<ProductAttributeEntity>,
     private readonly categoryService: CategoriesService,
     private readonly warehouseService: WarehousesService,
+    @Inject(forwardRef(() => PromotionService))
+    private readonly promotionService: PromotionService,
   ) {}
   async create(
     createProductAttributeDto: CreateProductAttributeDto,
@@ -137,8 +142,19 @@ export class ProductsService {
       order: { createdAt: 'DESC' },
     });
     const result = await Promise.all(
-      products.map((product) => this.findOneProductAttribute(product.id)),
+      products.map(async (product) => {
+        const productAttribute = await this.findOneProductAttribute(product.id);
+        await this.promotionService.checkTimePromotion(
+          productAttribute.promotion.id,
+        );
+
+        return productAttribute;
+      }),
     );
+    // const result = await Promise.all(
+    //   products.map((product) => this.findOneProductAttribute(product.id)),
+    // );
+    console.log(result);
     const totalPages = Math.ceil(total / limit);
     return {
       items: result,
@@ -307,6 +323,19 @@ export class ProductsService {
       products[i].promotion = promotion;
       await this.productAttributeRepository.save(products);
     }
+  }
+
+  async updatePromotion(id: string) {
+    const product = await this.productAttributeRepository.findOne({
+      where: {
+        id: id,
+      },
+    });
+    if (!product) {
+      throw new BadRequestException('Product not found');
+    }
+    product.promotion = null;
+    return await this.productAttributeRepository.save(product);
   }
 
   async updateStock(
