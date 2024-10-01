@@ -27,7 +27,7 @@ export class PromotionService {
       throw new BadRequestException(
         'The start day must be less than the end day',
       );
-    if (!checkText(createPromotionDto.name)) {
+    if (checkText(createPromotionDto.name)) {
       throw new BadRequestException(
         'The promotion contains special characters',
       );

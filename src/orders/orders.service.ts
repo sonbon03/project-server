@@ -29,119 +29,157 @@ export class OrdersService {
     private readonly employeesService: EmployeesService,
     private readonly vouchersService: VouchersService,
   ) {}
+
+  // async create(createOrderDto: CreateOrderDto, currentStore: StoreEntity) {
+  //   for (let i = 0; i < createOrderDto.products.length; i++) {
+  //     const productAttribute = await this.productsService.findOneAttribute(
+  //       createOrderDto.products[i].id_attribute,
+  //       createOrderDto.products[i].id_product,
+  //     );
+  //     if (checkText(productAttribute.attribute.key)) {
+  //       throw new BadRequestException('The name contains special characters');
+  //     }
+  //     if (productAttribute.promotion) {
+  //       const price =
+  //         productAttribute.attribute.price *
+  //         (1 - productAttribute.promotion.percentage / 100);
+  //       if (price !== createOrderDto.products[i].price)
+  //         throw new BadRequestException('Incorrect billing for product');
+  //     }
+
+  //     if (productAttribute.attribute.status === StatusAttibute.NOT) {
+  //       throw new BadRequestException('Product out of stock');
+  //     }
+  //   }
+
+  //   const totalQuantity = createOrderDto.products.reduce(
+  //     (sum, product) => sum + product.quantity,
+  //     0,
+  //   );
+  //   let totalAmount = createOrderDto.products.reduce(
+  //     (sum, product) => sum + product.price * product.quantity,
+  //     0,
+  //   );
+
+  //   if (totalAmount !== createOrderDto.payment.total) {
+  //     throw new BadRequestException('Incorrect billing for order');
+  //   }
+
+  //   let voucher: VoucherEnity;
+  //   if (createOrderDto.id_voucher) {
+  //     voucher = await this.vouchersService.findOne(
+  //       createOrderDto.id_voucher,
+  //       currentStore,
+  //     );
+  //     totalAmount -= voucher?.money;
+  //   }
+
+  //   const payment = new PaymentEntity();
+  //   Object.assign(payment, createOrderDto.payment);
+  //   payment.paymentDate = new Date();
+  //   payment.status =
+  //     createOrderDto.payment.paymentMethod === PaymentMethod.CASH ||
+  //     createOrderDto.payment.paymentMethod === PaymentMethod.CARD
+  //       ? StatusPayment.PAID
+  //       : StatusPayment.PENDING;
+
+  //   const order = new OrderEntity();
+  //   order.payment = payment;
+  //   order.store = currentStore;
+  //   order.moneyDiscount = voucher?.money ? voucher.money : 0;
+
+  //   if (createOrderDto.id_user) {
+  //     const employee = await this.employeesService.findOneCustomer(
+  //       createOrderDto.id_user,
+  //       currentStore,
+  //     );
+  //     order.employee = employee;
+  //   } else {
+  //     order.employee = null;
+  //   }
+
+  //   order.quantityProduct = totalQuantity;
+  //   order.total = totalAmount;
+  //   order.timeBuy = new Date();
+
+  //   const orderTbl = await this.orderRepository.save(order);
+
+  //   const opEntity: OrderProductEntity[] = [];
+
+  //   let point: number;
+
+  //   for (let i = 0; i < createOrderDto.products.length; i++) {
+  //     const orderProductEntity = new OrderProductEntity();
+  //     orderProductEntity.order = order;
+  //     const productAttribute = await this.productsService.findOneAttribute(
+  //       createOrderDto.products[i].id_attribute,
+  //       createOrderDto.products[i].id_product,
+  //     );
+
+  //     orderProductEntity.productAttribute = productAttribute;
+  //     orderProductEntity.quantity = createOrderDto.products[i].quantity;
+  //     orderProductEntity.discount = productAttribute.promotion
+  //       ? Number(productAttribute.promotion.percentage)
+  //       : 0;
+
+  //     const rawPrice =
+  //       productAttribute.attribute.price *
+  //       (1 - orderProductEntity.discount / 100);
+
+  //     const price: number = Number(Math.round(rawPrice * 100) / 100);
+  //     orderProductEntity.price = price;
+  //     if (price >= 100.0) {
+  //       point = parseFloat(
+  //         (price * orderProductEntity.quantity * 0.01).toFixed(3),
+  //       );
+  //     } else {
+  //       point = 0;
+  //     }
+
+  //     opEntity.push(orderProductEntity);
+  //   }
+
+  //   if (createOrderDto.id_user) {
+  //     await this.employeesService.updatePoint(point, createOrderDto.id_user);
+  //   }
+
+  //   await this.orderProductRepository
+  //     .createQueryBuilder()
+  //     .insert()
+  //     .into(OrderProductEntity)
+  //     .values(opEntity)
+  //     .execute();
+
+  //   return await this.findOne(orderTbl.id, currentStore);
+  // }
+
+  // ============================== BEGIN: Create ORDER ==============================
+
   async create(createOrderDto: CreateOrderDto, currentStore: StoreEntity) {
-    for (let i = 0; i < createOrderDto.products.length; i++) {
-      const productAttribute = await this.productsService.findOneAttribute(
-        createOrderDto.products[i].id_attribute,
-        createOrderDto.products[i].id_product,
-      );
-      if (!checkText(productAttribute.attribute.key)) {
-        throw new BadRequestException('The name contains special characters');
-      }
-      if (productAttribute.promotion) {
-        const price =
-          productAttribute.attribute.price *
-          (1 - productAttribute.promotion.percentage / 100);
-        if (price !== createOrderDto.products[i].price)
-          throw new BadRequestException('Incorrect billing for product');
-      }
+    await this.validateProducts(createOrderDto);
 
-      if (productAttribute.attribute.status === StatusAttibute.NOT) {
-        throw new BadRequestException('Product out of stock');
-      }
-    }
+    const totalQuantity = this.calculateTotalQuantity(createOrderDto);
+    let totalAmount = this.calculateTotalAmount(createOrderDto);
 
-    const totalQuantity = createOrderDto.products.reduce(
-      (sum, product) => sum + product.quantity,
-      0,
-    );
-    let totalAmount = createOrderDto.products.reduce(
-      (sum, product) => sum + product.price * product.quantity,
-      0,
-    );
-
-    if (totalAmount !== createOrderDto.payment.total) {
-      throw new BadRequestException('Incorrect billing for order');
-    }
-
-    let voucher: VoucherEnity;
     if (createOrderDto.id_voucher) {
-      voucher = await this.vouchersService.findOne(
+      const voucher = await this.vouchersService.findOne(
         createOrderDto.id_voucher,
         currentStore,
       );
       totalAmount -= voucher?.money;
     }
 
-    const payment = new PaymentEntity();
-    Object.assign(payment, createOrderDto.payment);
-    payment.paymentDate = new Date();
-    payment.status =
-      createOrderDto.payment.paymentMethod === PaymentMethod.CASH ||
-      createOrderDto.payment.paymentMethod === PaymentMethod.CARD
-        ? StatusPayment.PAID
-        : StatusPayment.PENDING;
+    const order = await this.createOrderEntity(createOrderDto, currentStore);
 
-    const order = new OrderEntity();
-    order.payment = payment;
-    order.store = currentStore;
-    order.moneyDiscount = voucher?.money ? voucher.money : 0;
+    const opEntity: OrderProductEntity[] =
+      await this.createOrderProductEntities(order, createOrderDto);
 
     if (createOrderDto.id_user) {
-      const employee = await this.employeesService.findOneCustomer(
-        createOrderDto.id_user,
-        currentStore,
-      );
-      order.employee = employee;
-    } else {
-      order.employee = null;
+      const point = this.calculatePoint(opEntity);
+      await this.updateEmployeePoints(point, createOrderDto.id_user);
     }
-
-    order.quantityProduct = totalQuantity;
-    order.total = totalAmount;
-    order.timeBuy = new Date();
 
     const orderTbl = await this.orderRepository.save(order);
-
-    const opEntity: OrderProductEntity[] = [];
-
-    let point: number;
-
-    for (let i = 0; i < createOrderDto.products.length; i++) {
-      const orderProductEntity = new OrderProductEntity();
-      orderProductEntity.order = order;
-      const productAttribute = await this.productsService.findOneAttribute(
-        createOrderDto.products[i].id_attribute,
-        createOrderDto.products[i].id_product,
-      );
-
-      orderProductEntity.productAttribute = productAttribute;
-      orderProductEntity.quantity = createOrderDto.products[i].quantity;
-      orderProductEntity.discount = productAttribute.promotion
-        ? Number(productAttribute.promotion.percentage)
-        : 0;
-
-      const rawPrice =
-        productAttribute.attribute.price *
-        (1 - orderProductEntity.discount / 100);
-
-      const price: number = Number(Math.round(rawPrice * 100) / 100);
-      orderProductEntity.price = price;
-      if (price >= 100.0) {
-        point = parseFloat(
-          (price * orderProductEntity.quantity * 0.01).toFixed(3),
-        );
-      } else {
-        point = 0;
-      }
-
-      opEntity.push(orderProductEntity);
-    }
-
-    if (createOrderDto.id_user) {
-      await this.employeesService.updatePoint(point, createOrderDto.id_user);
-    }
-
     await this.orderProductRepository
       .createQueryBuilder()
       .insert()
@@ -151,6 +189,141 @@ export class OrdersService {
 
     return await this.findOne(orderTbl.id, currentStore);
   }
+
+  async validateProducts(createOrderDto: CreateOrderDto) {
+    for (let i = 0; i < createOrderDto.products.length; i++) {
+      const productAttribute = await this.productsService.findOneAttribute(
+        createOrderDto.products[i].id_attribute,
+        createOrderDto.products[i].id_product,
+      );
+      await this.validateProductAttribute(productAttribute);
+    }
+  }
+
+  async validateProductAttribute(productAttribute: any) {
+    if (checkText(productAttribute.attribute.key)) {
+      throw new BadRequestException('The name contains special characters');
+    }
+    if (productAttribute.attribute.status === StatusAttibute.NOT) {
+      throw new BadRequestException('Product out of stock');
+    }
+  }
+
+  calculateTotalQuantity(createOrderDto: CreateOrderDto) {
+    return createOrderDto.products.reduce(
+      (sum, product) => sum + product.quantity,
+      0,
+    );
+  }
+
+  calculateTotalAmount(createOrderDto: CreateOrderDto) {
+    return createOrderDto.products.reduce(
+      (sum, product) => sum + product.price * product.quantity,
+      0,
+    );
+  }
+
+  async createOrderEntity(
+    createOrderDto: CreateOrderDto,
+    currentStore: StoreEntity,
+  ) {
+    const order = new OrderEntity();
+    order.store = currentStore;
+    order.payment = new PaymentEntity();
+    Object.assign(order.payment, createOrderDto.payment);
+    order.payment.paymentDate = new Date();
+    order.payment.status =
+      createOrderDto.payment.paymentMethod === PaymentMethod.CASH ||
+      createOrderDto.payment.paymentMethod === PaymentMethod.CARD
+        ? StatusPayment.PAID
+        : StatusPayment.PENDING;
+    order.timeBuy = new Date();
+    order.quantityProduct = this.calculateTotalQuantity(createOrderDto);
+    order.total = this.calculateTotalAmount(createOrderDto);
+
+    if (createOrderDto.id_voucher) {
+      const voucher = await this.vouchersService.findOne(
+        createOrderDto.id_voucher,
+        currentStore,
+      );
+      order.moneyDiscount = voucher?.money || 0;
+    } else {
+      order.moneyDiscount = 0;
+    }
+
+    return order;
+  }
+
+  async createOrderProductEntities(
+    order: OrderEntity,
+    createOrderDto: CreateOrderDto,
+  ) {
+    const opEntity: OrderProductEntity[] = [];
+    for (let i = 0; i < createOrderDto.products.length; i++) {
+      const productAttribute = await this.productsService.findOneAttribute(
+        createOrderDto.products[i].id_attribute,
+        createOrderDto.products[i].id_product,
+      );
+      const orderProductEntity = await this.createOrderProductEntity(
+        order,
+        productAttribute,
+        createOrderDto.products[i].quantity,
+      );
+      opEntity.push(orderProductEntity);
+    }
+    return opEntity;
+  }
+
+  async createOrderProductEntity(
+    order: OrderEntity,
+    productAttribute: any,
+    quantity: number,
+  ) {
+    const orderProductEntity = new OrderProductEntity();
+    orderProductEntity.order = order;
+    orderProductEntity.productAttribute = productAttribute;
+    orderProductEntity.quantity = quantity;
+    orderProductEntity.discount = productAttribute.promotion
+      ? Number(productAttribute.promotion.percentage)
+      : 0;
+    const rawPrice = this.calculateProductPriceWithPromotion(productAttribute);
+    const price: number = Number(Math.round(rawPrice * 100) / 100);
+    orderProductEntity.price = price;
+    return orderProductEntity;
+  }
+
+  calculateProductPriceWithPromotion(productAttribute: any) {
+    if (productAttribute.promotion) {
+      const price =
+        productAttribute.attribute.price *
+        (1 - productAttribute.promotion.percentage / 100);
+      return price;
+    }
+    return productAttribute.attribute.price;
+  }
+
+  async updateEmployeePoints(point: number, idUser: string) {
+    await this.employeesService.updatePoint(point, idUser);
+  }
+
+  calculatePoint(opEntity: OrderProductEntity[]) {
+    let point: number = 0;
+    for (let i = 0; i < opEntity.length; i++) {
+      const orderProductEntity = opEntity[i];
+      if (orderProductEntity.price >= 100.0) {
+        point += parseFloat(
+          (
+            orderProductEntity.price *
+            orderProductEntity.quantity *
+            0.01
+          ).toFixed(3),
+        );
+      }
+    }
+    return point;
+  }
+
+  // ============================== END: Create ORDER ==============================
 
   async findAll(currentStore: StoreEntity) {
     const order = this.orderRepository.find({

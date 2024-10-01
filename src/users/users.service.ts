@@ -333,7 +333,7 @@ export class UsersService {
     createUserStore: CreateUserStoreDto,
     currentAdmin: AdminEntity,
   ) {
-    if (!checkText(createUserStore.store.name)) {
+    if (checkText(createUserStore.store.name)) {
       throw new BadRequestException(
         'The category name contains special characters',
       );

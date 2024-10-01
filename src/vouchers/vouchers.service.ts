@@ -14,7 +14,7 @@ export class VouchersService {
     private readonly vouchersRepository: Repository<VoucherEnity>,
   ) {}
   async create(createVoucherDto: CreateVoucherDto, currentStore: StoreEntity) {
-    if (!checkText(createVoucherDto.name)) {
+    if (checkText(createVoucherDto.name)) {
       throw new BadRequestException(
         'The voucher name contains special characters',
       );

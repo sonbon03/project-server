@@ -23,7 +23,7 @@ export class CategoriesService {
     });
     if (categoryExists.length > 0)
       throw new BadRequestException('Category was exists');
-    if (!checkText(createCategoryDto.name)) {
+    if (checkText(createCategoryDto.name)) {
       throw new BadRequestException(
         'The category name contains special characters',
       );

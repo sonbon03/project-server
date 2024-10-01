@@ -21,6 +21,19 @@ export class EmployeesService {
     createEmployeeDto: CreateEmployeeDto,
     currentStore: StoreEntity,
   ): Promise<EmployeeEntity> {
+    const phoneExists = await this.employeesRepository.find({
+      where: {
+        phone: createEmployeeDto.phone,
+        store: { id: currentStore.id },
+      },
+    });
+    if (!phoneExists) throw new BadRequestException('Phone number was exists');
+    if (
+      checkText(createEmployeeDto.firstName) ||
+      checkText(createEmployeeDto.lastName)
+    ) {
+      throw new BadRequestException('The name contains special characters');
+    }
     const staff = await this.addEmployees(
       Roles.STAFF,
       createEmployeeDto,
@@ -33,6 +46,19 @@ export class EmployeesService {
     createEmployeeDto: CreateEmployeeDto,
     currentStore: StoreEntity,
   ): Promise<EmployeeEntity> {
+    const phoneExists = await this.employeesRepository.find({
+      where: {
+        phone: createEmployeeDto.phone,
+        store: { id: currentStore.id },
+      },
+    });
+    if (!phoneExists) throw new BadRequestException('Phone number was exists');
+    if (
+      checkText(createEmployeeDto.firstName) ||
+      checkText(createEmployeeDto.lastName)
+    ) {
+      throw new BadRequestException('The name contains special characters');
+    }
     const customer = await this.addEmployees(
       Roles.CUSTOMER,
       createEmployeeDto,
@@ -171,16 +197,6 @@ export class EmployeesService {
     data: CreateEmployeeDto,
     currentStore: StoreEntity,
   ) {
-    const phoneExists = await this.employeesRepository.find({
-      where: {
-        phone: data.phone,
-        store: { id: currentStore.id },
-      },
-    });
-    if (!phoneExists) throw new BadRequestException('Phone number was exists');
-    if (!checkText(data.firstName) || !checkText(data.lastName)) {
-      throw new BadRequestException('The name contains special characters');
-    }
     if (
       (data.salary === 0 || data.salary < 0 || !data.salary) &&
       role === Roles.STAFF

@@ -17,7 +17,7 @@ export class WarehousesService {
     createWarehouseDto: CreateWarehouseDto,
     currentStore: StoreEntity,
   ): Promise<any> {
-    if (!checkText(createWarehouseDto.name)) {
+    if (checkText(createWarehouseDto.name)) {
       throw new BadRequestException(
         'The category name contains special characters',
       );
