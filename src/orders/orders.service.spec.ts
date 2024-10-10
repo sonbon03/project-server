@@ -9,7 +9,6 @@ import { StoreEntity } from '../users/entities/store.entity';
 import { VouchersService } from '../vouchers/vouchers.service';
 import { CreateOrderProductDto } from './dto/create-order-product.dto';
 import { CreatePaymentDto } from './dto/create-payment.dto';
-// import { UserEntity } from '../users/entities/user.entity';
 import { Gender } from '../utils/enums/user-gender.enum';
 import { Roles } from '../utils/enums/user-roles.enum';
 import { Timestamp } from 'typeorm';
@@ -18,7 +17,7 @@ import { PaymentMethod } from '../utils/enums/payment-method.enum';
 import { ProductsService } from '../products/products.service';
 
 describe('OrdersService', () => {
-  let service: OrdersService;
+  let ordersService: OrdersService;
   let orderRepositoryMock: { save: jest.Mock };
   let orderProductRepositoryMock: { createQueryBuilder: jest.Mock };
   let vouchersServiceMock: { findOne: jest.Mock };
@@ -28,6 +27,7 @@ describe('OrdersService', () => {
     orderRepositoryMock = {
       save: jest.fn(),
     };
+
     orderProductRepositoryMock = {
       createQueryBuilder: jest.fn().mockReturnValue({
         insert: jest.fn().mockReturnThis(),
@@ -36,9 +36,11 @@ describe('OrdersService', () => {
         execute: jest.fn(),
       }),
     };
+
     vouchersServiceMock = {
       findOne: jest.fn(),
     };
+
     productsServiceMock = {
       validateProducts: jest.fn(),
     };
@@ -59,7 +61,7 @@ describe('OrdersService', () => {
       ],
     }).compile();
 
-    service = module.get<OrdersService>(OrdersService);
+    ordersService = module.get<OrdersService>(OrdersService);
   });
 
   afterEach(() => {
@@ -79,7 +81,7 @@ describe('OrdersService', () => {
       .mockRejectedValueOnce(new BadRequestException());
 
     await expect(
-      service.create(createOrderDto, {} as StoreEntity), // Ensure StoreEntity is correctly defined
+      ordersService.create(createOrderDto, {} as StoreEntity),
     ).rejects.toThrow(BadRequestException);
   });
 
@@ -90,6 +92,7 @@ describe('OrdersService', () => {
       id_user: 'user-id',
       id_voucher: undefined,
     };
+
     const currentStore: StoreEntity = {
       id: '0466c77e-6314-4c51-8664-9a4b159237b8',
       name: 'store 1',
@@ -105,13 +108,12 @@ describe('OrdersService', () => {
       vouchers: [],
     };
 
-    // Mock necessary methods
     jest
       .spyOn(productsServiceMock, 'validateProducts')
       .mockResolvedValueOnce({});
-    jest.spyOn(service, 'calculateTotalQuantity').mockReturnValueOnce(5);
-    jest.spyOn(service, 'calculateTotalAmount').mockReturnValueOnce(1000);
-    jest.spyOn(service, 'createOrderEntity').mockResolvedValueOnce({
+    jest.spyOn(ordersService, 'calculateTotalQuantity').mockReturnValueOnce(5);
+    jest.spyOn(ordersService, 'calculateTotalAmount').mockReturnValueOnce(1000);
+    jest.spyOn(ordersService, 'createOrderEntity').mockResolvedValueOnce({
       id: 'order-id',
       quantityProduct: 5,
       timeBuy: new Date(),
@@ -148,15 +150,24 @@ describe('OrdersService', () => {
         order: new OrderEntity(),
       },
     });
-    jest.spyOn(service, 'createOrderProductEntities').mockResolvedValueOnce([]);
-    jest.spyOn(service, 'calculatePoint').mockReturnValueOnce(100);
-    jest.spyOn(service, 'updateEmployeePoints').mockResolvedValueOnce();
+
+    jest
+      .spyOn(ordersService, 'createOrderProductEntities')
+      .mockResolvedValueOnce([]);
+    jest.spyOn(ordersService, 'calculatePoint').mockReturnValueOnce(100);
+    jest.spyOn(ordersService, 'updateEmployeePoints').mockResolvedValueOnce();
     orderRepositoryMock.save.mockResolvedValueOnce({ id: 'order-id' });
 
-    const result = await service.create(createOrderDto, currentStore);
+    const result = await ordersService.create(createOrderDto, currentStore);
 
     expect(result).toBeDefined();
-    expect(orderRepositoryMock.save).toHaveBeenCalled();
+    expect(orderRepositoryMock.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'order-id',
+        quantityProduct: 5,
+        total: 1000,
+      }),
+    );
     expect(
       orderProductRepositoryMock.createQueryBuilder().insert,
     ).toHaveBeenCalled();
@@ -169,6 +180,7 @@ describe('OrdersService', () => {
       id_voucher: 'voucher-id',
       id_user: 'user-id',
     };
+
     const currentStore: StoreEntity = {
       id: '0466c77e-6314-4c51-8664-9a4b159237b8',
       name: 'store 1',
@@ -184,20 +196,20 @@ describe('OrdersService', () => {
       vouchers: [],
     };
 
-    // Mock necessary methods
     jest
       .spyOn(productsServiceMock, 'validateProducts')
       .mockResolvedValueOnce({});
-    jest.spyOn(service, 'calculateTotalQuantity').mockReturnValueOnce(5);
-    jest.spyOn(service, 'calculateTotalAmount').mockReturnValueOnce(1000);
+    jest.spyOn(ordersService, 'calculateTotalQuantity').mockReturnValueOnce(5);
+    jest.spyOn(ordersService, 'calculateTotalAmount').mockReturnValueOnce(1000);
     jest
       .spyOn(vouchersServiceMock, 'findOne')
       .mockResolvedValueOnce({ money: 100 }); // Ensure this returns a valid voucher object
-    jest.spyOn(service, 'createOrderEntity').mockResolvedValueOnce({
+
+    jest.spyOn(ordersService, 'createOrderEntity').mockResolvedValueOnce({
       id: 'order-id',
       quantityProduct: 5,
       timeBuy: new Date(),
-      total: 1000,
+      total: 900, // total after discount
       moneyDiscount: 100,
       store: currentStore,
       createdAt: new Date() as unknown as Timestamp,
@@ -231,14 +243,21 @@ describe('OrdersService', () => {
       },
     });
 
-    jest.spyOn(service, 'createOrderProductEntities').mockResolvedValueOnce([]);
+    jest
+      .spyOn(ordersService, 'createOrderProductEntities')
+      .mockResolvedValueOnce([]);
+    jest.spyOn(ordersService, 'calculatePoint').mockReturnValueOnce(100);
+    jest.spyOn(ordersService, 'updateEmployeePoints').mockResolvedValueOnce();
+    orderRepositoryMock.save.mockResolvedValueOnce({ id: 'order-id' });
 
-    const result = await service.create(createOrderDto, currentStore);
+    const result = await ordersService.create(createOrderDto, currentStore);
 
     expect(result).toBeDefined();
-    expect(orderRepositoryMock.save).toHaveBeenCalled();
-    expect(
-      orderProductRepositoryMock.createQueryBuilder().insert,
-    ).toHaveBeenCalled();
+    expect(orderRepositoryMock.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'order-id',
+        total: 900, // total after discount
+      }),
+    );
   });
 });
