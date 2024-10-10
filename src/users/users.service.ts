@@ -331,7 +331,7 @@ export class UsersService {
 
   async createModerator(
     createUserStore: CreateUserStoreDto,
-    currentAdmin: AdminEntity,
+    currentAdmin: TypeCurrent,
   ) {
     if (checkText(createUserStore.store.name)) {
       throw new BadRequestException(
@@ -349,7 +349,7 @@ export class UsersService {
     user.password = await hash(user.password, 10);
     user.roles = Roles.MODERATOR;
     const admin = await this.adminRepository.findOne({
-      where: { id: currentAdmin.id },
+      where: { id: currentAdmin.idAdmin },
     });
     user.admin = admin;
     user.store = store;
