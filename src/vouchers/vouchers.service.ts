@@ -1,11 +1,11 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { StoreEntity } from 'src/users/entities/store.entity';
+import { StoreEntity } from '../users/entities/store.entity';
 import { LessThanOrEqual, Repository } from 'typeorm';
 import { CreateVoucherDto } from './dto/create-voucher.dto';
 import { UpdateVoucherDto } from './dto/update-voucher.dto';
 import { VoucherEnity } from './entities/voucher.entity';
-import { checkText } from 'src/utils/common/CheckText';
+import { checkText } from '../utils/common/CheckText';
 
 @Injectable()
 export class VouchersService {

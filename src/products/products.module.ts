@@ -1,8 +1,8 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { CategoriesModule } from 'src/categories/categories.module';
-import { PromotionModule } from 'src/promotion/promotion.module';
-import { WarehousesModule } from 'src/warehouses/warehouses.module';
+import { CategoriesModule } from '../categories/categories.module';
+import { PromotionModule } from '../promotion/promotion.module';
+import { WarehousesModule } from '../warehouses/warehouses.module';
 import { AttributeEntity } from './entities/attribute.entity';
 import { ProductAttributeEntity } from './entities/product-attribute.entity';
 import { ProductEntity } from './entities/product.entity';

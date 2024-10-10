@@ -1,10 +1,10 @@
-import { CategoryEntity } from 'src/categories/entities/category.entity';
-import { EmployeeEntity } from 'src/employees/entities/employee.entity';
-import { OrderEntity } from 'src/orders/entities/order.entity';
-import { ProductEntity } from 'src/products/entities/product.entity';
-import { PromotionEntity } from 'src/promotion/entities/promotion.entity';
-import { VoucherEnity } from 'src/vouchers/entities/voucher.entity';
-import { WarehouseEntity } from 'src/warehouses/entities/warehouse.entity';
+import { CategoryEntity } from '../../categories/entities/category.entity';
+import { EmployeeEntity } from '../../employees/entities/employee.entity';
+import { OrderEntity } from '../../orders/entities/order.entity';
+import { ProductEntity } from '../../products/entities/product.entity';
+import { PromotionEntity } from '../../promotion/entities/promotion.entity';
+import { VoucherEnity } from '../../vouchers/entities/voucher.entity';
+import { WarehouseEntity } from '../../warehouses/entities/warehouse.entity';
 import {
   Column,
   Entity,

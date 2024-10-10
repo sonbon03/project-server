@@ -7,10 +7,10 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { compare, hash } from 'bcrypt';
 import { sign } from 'jsonwebtoken';
-import { MailService } from 'src/mail/mail.service';
-import { Roles } from 'src/utils/enums/user-roles.enum';
-import { Status } from 'src/utils/enums/user-status.enum';
-import { TypeCurrent } from 'src/utils/middlewares/current-user.middleware';
+import { MailService } from '../mail/mail.service';
+import { Roles } from '../utils/enums/user-roles.enum';
+import { Status } from '../utils/enums/user-status.enum';
+import { TypeCurrent } from '../utils/middlewares/current-user.middleware';
 import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { AdminDto } from './dto/admin.dto';
@@ -20,7 +20,7 @@ import { AdminEntity } from './entities/admin.entity';
 import { StoreEntity } from './entities/store.entity';
 import { UserEntity } from './entities/user.entity';
 import { UpdateStoreStatus } from './dto/update.store.dto';
-import { checkText } from 'src/utils/common/CheckText';
+import { checkText } from '../utils/common/CheckText';
 
 @Injectable()
 export class UsersService {
@@ -94,7 +94,7 @@ export class UsersService {
     const user = {
       ...userExists,
       name: !userExists.store
-        ? (adminExists?.name ?? '')
+        ? (adminExists.name ?? '')
         : userExists.store.name,
     };
     return user;

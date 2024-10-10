@@ -3,8 +3,8 @@ import { PromotionService } from './promotion.service';
 import { PromotionController } from './promotion.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PromotionEntity } from './entities/promotion.entity';
-import { ProductsModule } from 'src/products/products.module';
-import { ProductAttributeEntity } from 'src/products/entities/product-attribute.entity';
+import { ProductsModule } from '../products/products.module';
+import { ProductAttributeEntity } from '../products/entities/product-attribute.entity';
 
 @Module({
   imports: [

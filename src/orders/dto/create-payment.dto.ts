@@ -1,6 +1,6 @@
 import { IsNotEmpty } from 'class-validator';
-import { PaymentMethod } from 'src/utils/enums/payment-method.enum';
-import { StatusPayment } from 'src/utils/enums/user-status.enum';
+import { PaymentMethod } from '../../utils/enums/payment-method.enum';
+import { StatusPayment } from '../../utils/enums/user-status.enum';
 
 export class CreatePaymentDto {
   @IsNotEmpty({ message: 'Payment method not be empty' })

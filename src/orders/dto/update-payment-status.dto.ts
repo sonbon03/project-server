@@ -1,5 +1,5 @@
 import { IsIn, IsNotEmpty, IsString } from 'class-validator';
-import { StatusPayment } from 'src/utils/enums/user-status.enum';
+import { StatusPayment } from '../../utils/enums/user-status.enum';
 
 export class UpdatePaymentStatusDto {
   @IsNotEmpty({ message: '' })

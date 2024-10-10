@@ -1,7 +1,7 @@
-import { OrderEntity } from 'src/orders/entities/order.entity';
-import { StoreEntity } from 'src/users/entities/store.entity';
-import { Gender } from 'src/utils/enums/user-gender.enum';
-import { Roles } from 'src/utils/enums/user-roles.enum';
+import { OrderEntity } from '../../orders/entities/order.entity';
+import { StoreEntity } from '../../users/entities/store.entity';
+import { Gender } from '../../utils/enums/user-gender.enum';
+import { Roles } from '../../utils/enums/user-roles.enum';
 import {
   Column,
   CreateDateColumn,

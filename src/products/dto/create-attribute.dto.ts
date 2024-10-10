@@ -1,5 +1,5 @@
 import { IsNotEmpty, IsNumber, IsString, Min } from 'class-validator';
-import { StatusAttibute } from 'src/utils/enums/user-status.enum';
+import { StatusAttibute } from '../../utils/enums/user-status.enum';
 
 export class CreateAttributeDto {
   @IsNotEmpty({ message: 'Key not be empty' })

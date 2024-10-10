@@ -1,11 +1,11 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { StoreEntity } from 'src/users/entities/store.entity';
+import { StoreEntity } from '../users/entities/store.entity';
 import { Repository } from 'typeorm';
 import { CreateWarehouseDto } from './dto/create-warehouse.dto';
 import { UpdateWarehouseDto } from './dto/update-warehouse.dto';
 import { WarehouseEntity } from './entities/warehouse.entity';
-import { checkText } from 'src/utils/common/CheckText';
+import { checkText } from '../utils/common/CheckText';
 
 @Injectable()
 export class WarehousesService {

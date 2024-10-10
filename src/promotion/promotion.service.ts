@@ -1,13 +1,13 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ProductsService } from 'src/products/products.service';
-import { StoreEntity } from 'src/users/entities/store.entity';
+import { ProductsService } from '../products/products.service';
+import { StoreEntity } from '../users/entities/store.entity';
 import { Repository } from 'typeorm';
 import { CreatePromotionDto } from './dto/create-promotion.dto';
 import { UpdatePromotionDto } from './dto/update-promotion.dto';
 import { PromotionEntity } from './entities/promotion.entity';
-import { ProductAttributeEntity } from 'src/products/entities/product-attribute.entity';
-import { checkText } from 'src/utils/common/CheckText';
+import { ProductAttributeEntity } from '../products/entities/product-attribute.entity';
+import { checkText } from '../utils/common/CheckText';
 
 @Injectable()
 export class PromotionService {

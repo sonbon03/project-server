@@ -1,5 +1,5 @@
-import { EmployeeEntity } from 'src/employees/entities/employee.entity';
-import { StoreEntity } from 'src/users/entities/store.entity';
+import { EmployeeEntity } from '../../employees/entities/employee.entity';
+import { StoreEntity } from '../../users/entities/store.entity';
 import {
   Column,
   CreateDateColumn,

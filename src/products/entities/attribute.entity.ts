@@ -1,4 +1,4 @@
-import { StatusAttibute } from 'src/utils/enums/user-status.enum';
+import { StatusAttibute } from '../../utils/enums/user-status.enum';
 import {
   Column,
   CreateDateColumn,

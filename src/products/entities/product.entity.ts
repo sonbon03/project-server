@@ -1,6 +1,6 @@
-import { CategoryEntity } from 'src/categories/entities/category.entity';
-import { StoreEntity } from 'src/users/entities/store.entity';
-import { WarehouseEntity } from 'src/warehouses/entities/warehouse.entity';
+import { CategoryEntity } from '../../categories/entities/category.entity';
+import { StoreEntity } from '../../users/entities/store.entity';
+import { WarehouseEntity } from '../../warehouses/entities/warehouse.entity';
 import {
   Column,
   CreateDateColumn,

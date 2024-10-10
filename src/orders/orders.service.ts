@@ -1,22 +1,18 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EmployeesService } from 'src/employees/employees.service';
-import { ProductsService } from 'src/products/products.service';
-import { StoreEntity } from 'src/users/entities/store.entity';
-import {
-  StatusAttibute,
-  StatusPayment,
-} from 'src/utils/enums/user-status.enum';
+import { EmployeesService } from '../employees/employees.service';
+import { ProductsService } from '../products/products.service';
+import { StoreEntity } from '../users/entities/store.entity';
+import { checkText } from '../utils/common/CheckText';
+import { PaymentMethod } from '../utils/enums/payment-method.enum';
+import { StatusAttibute, StatusPayment } from '../utils/enums/user-status.enum';
+import { VouchersService } from '../vouchers/vouchers.service';
 import { Repository } from 'typeorm';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdatePaymentStatusDto } from './dto/update-payment-status.dto';
 import { OrderProductEntity } from './entities/order-product.entity';
 import { OrderEntity } from './entities/order.entity';
 import { PaymentEntity } from './entities/payment.entity';
-import { PaymentMethod } from 'src/utils/enums/payment-method.enum';
-import { VouchersService } from 'src/vouchers/vouchers.service';
-import { VoucherEnity } from 'src/vouchers/entities/voucher.entity';
-import { checkText } from 'src/utils/common/CheckText';
 
 @Injectable()
 export class OrdersService {
@@ -157,7 +153,6 @@ export class OrdersService {
 
   async create(createOrderDto: CreateOrderDto, currentStore: StoreEntity) {
     await this.validateProducts(createOrderDto);
-
     const totalQuantity = this.calculateTotalQuantity(createOrderDto);
     let totalAmount = this.calculateTotalAmount(createOrderDto);
 
@@ -166,7 +161,7 @@ export class OrdersService {
         createOrderDto.id_voucher,
         currentStore,
       );
-      totalAmount -= voucher?.money;
+      totalAmount -= voucher?.money && 0;
     }
 
     const order = await this.createOrderEntity(createOrderDto, currentStore);

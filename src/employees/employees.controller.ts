@@ -13,11 +13,11 @@ import { EmployeesService } from './employees.service';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { AuthenticationGuard } from '../utils/guards/authentication.guard';
-import { AuthorizeGuard } from 'src/utils/guards/authorization.guard';
-import { Roles } from 'src/utils/enums/user-roles.enum';
+import { AuthorizeGuard } from '../utils/guards/authorization.guard';
+import { Roles } from '../utils/enums/user-roles.enum';
 import { EmployeeEntity } from './entities/employee.entity';
-import { CurrentStore } from 'src/utils/decoratores/current-store.decoratore';
-import { StoreEntity } from 'src/users/entities/store.entity';
+import { CurrentStore } from '../utils/decoratores/current-store.decoratore';
+import { StoreEntity } from '../users/entities/store.entity';
 
 @Controller('employees')
 @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.MODERATOR]))

@@ -1,4 +1,4 @@
-import { Roles } from 'src/utils/enums/user-roles.enum';
+import { Roles } from '../../utils/enums/user-roles.enum';
 import {
   Column,
   CreateDateColumn,
@@ -13,7 +13,7 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { AdminEntity } from './admin.entity';
 import { StoreEntity } from './store.entity';
-import { Status } from 'src/utils/enums/user-status.enum';
+import { Status } from '../../utils/enums/user-status.enum';
 
 @Entity('users')
 export class UserEntity {

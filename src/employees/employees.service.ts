@@ -1,13 +1,13 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { StoreEntity } from 'src/users/entities/store.entity';
-import { UsersService } from 'src/users/users.service';
-import { Roles } from 'src/utils/enums/user-roles.enum';
+import { StoreEntity } from '../users/entities/store.entity';
+import { UsersService } from '../users/users.service';
+import { Roles } from '../utils/enums/user-roles.enum';
 import { Repository } from 'typeorm';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { EmployeeEntity } from './entities/employee.entity';
-import { checkText } from 'src/utils/common/CheckText';
+import { checkText } from '../utils/common/CheckText';
 
 @Injectable()
 export class EmployeesService {

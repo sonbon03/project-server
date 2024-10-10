@@ -6,15 +6,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CategoriesService } from 'src/categories/categories.service';
-import { PromotionEntity } from 'src/promotion/entities/promotion.entity';
-import { PromotionService } from 'src/promotion/promotion.service';
-import { StoreEntity } from 'src/users/entities/store.entity';
-import {
-  StatusAttibute,
-  StatusPayment,
-} from 'src/utils/enums/user-status.enum';
-import { WarehousesService } from 'src/warehouses/warehouses.service';
+import { CategoriesService } from '../categories/categories.service';
+import { PromotionEntity } from '../promotion/entities/promotion.entity';
+import { PromotionService } from '../promotion/promotion.service';
+import { StoreEntity } from '../users/entities/store.entity';
+import { StatusAttibute, StatusPayment } from '../utils/enums/user-status.enum';
+import { WarehousesService } from '../warehouses/warehouses.service';
 import { Repository } from 'typeorm';
 import { CreateAttributeDto } from './dto/create-attribute.dto';
 import { CreateProductAttributeDto } from './dto/create-product-attribute.dto';
@@ -155,12 +152,12 @@ export class ProductsService {
     return paEntity;
   }
 
-  async saveProductAttributeEntities(paEntity: ProductAttributeEntity[]) {
+  async saveProductAttributeEntities(paEntities: ProductAttributeEntity[]) {
     await this.productAttributeRepository
       .createQueryBuilder()
       .insert()
       .into(ProductAttributeEntity)
-      .values(paEntity)
+      .values(paEntities)
       .execute();
   }
 
@@ -179,7 +176,10 @@ export class ProductsService {
     return products;
   }
 
-  async findName(name: string, currentStore: StoreEntity) {
+  async findName(
+    name: string,
+    currentStore: StoreEntity,
+  ): Promise<string | null> {
     const nameProduct = name.toLowerCase();
     const product = await this.productRepository.findOne({
       where: { name: nameProduct, store: { id: currentStore.id } },

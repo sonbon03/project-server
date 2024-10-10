@@ -1,4 +1,4 @@
-import { ProductAttributeEntity } from 'src/products/entities/product-attribute.entity';
+import { ProductAttributeEntity } from '../../products/entities/product-attribute.entity';
 import {
   Column,
   CreateDateColumn,

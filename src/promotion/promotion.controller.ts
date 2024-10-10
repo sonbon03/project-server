@@ -12,12 +12,12 @@ import {
 import { PromotionService } from './promotion.service';
 import { CreatePromotionDto } from './dto/create-promotion.dto';
 import { UpdatePromotionDto } from './dto/update-promotion.dto';
-import { CurrentStore } from 'src/utils/decoratores/current-store.decoratore';
-import { StoreEntity } from 'src/users/entities/store.entity';
+import { CurrentStore } from '../utils/decoratores/current-store.decoratore';
+import { StoreEntity } from '../users/entities/store.entity';
 import { PromotionEntity } from './entities/promotion.entity';
-import { AuthenticationGuard } from 'src/utils/guards/authentication.guard';
-import { AuthorizeGuard } from 'src/utils/guards/authorization.guard';
-import { Roles } from 'src/utils/enums/user-roles.enum';
+import { AuthenticationGuard } from '../utils/guards/authentication.guard';
+import { AuthorizeGuard } from '../utils/guards/authorization.guard';
+import { Roles } from '../utils/enums/user-roles.enum';
 
 @Controller('promotion')
 @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.MODERATOR]))
