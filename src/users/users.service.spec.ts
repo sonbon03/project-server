@@ -116,17 +116,17 @@ describe('UsersService', () => {
   describe('signin', () => {
     it('should successfully signin a user', async () => {
       const signInDto: SignInDto = {
-        email: 'son@gmail.com',
+        email: 'tson2003@gmail.com',
         password: '12345',
       };
 
       mockUsersRepository.createQueryBuilder().getOne.mockResolvedValue({
-        id: '9e986ad5-a098-441d-badc-e92703bf4301',
+        id: 'b2d83a2b-9539-4a0b-99a6-c1fd5257a148',
         email: signInDto.email,
         password: await hash(signInDto.password, 10), // Mock hashed password
         store: null,
       });
-      mockAdminRepository.findOne.mockResolvedValue({ name: 'Admin Name' });
+      mockAdminRepository.findOne.mockResolvedValue({ name: 'aaaa' });
 
       const result = await usersService.signin(signInDto);
 
