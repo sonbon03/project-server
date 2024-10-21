@@ -7,6 +7,7 @@ import {
   Post,
   Put,
   Query,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { StoreEntity } from 'src/users/entities/store.entity';
@@ -17,6 +18,7 @@ import { AuthorizeGuard } from 'src/utils/guards/authorization.guard';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdatePaymentStatusDto } from './dto/update-payment-status.dto';
 import { OrdersService } from './orders.service';
+import { Response } from 'express';
 
 @Controller('orders')
 @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.MODERATOR]))
@@ -42,6 +44,22 @@ export class OrdersController {
       page,
       limit,
     );
+  }
+
+  @Get('export')
+  async exportOrdersToExcel(
+    @Res() res: Response,
+    @CurrentStore() currentStore: StoreEntity,
+  ): Promise<void> {
+    await this.ordersService.exportDataOrder(res, currentStore);
+  }
+
+  @Get('export/docx')
+  async exportOrdersToDocx(
+    @Res() res: Response,
+    @CurrentStore() currentStore: StoreEntity,
+  ): Promise<void> {
+    await this.ordersService.exportDocxOrder(res, currentStore);
   }
 
   @Get()

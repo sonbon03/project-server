@@ -17,6 +17,18 @@ import { PaymentMethod } from 'src/utils/enums/payment-method.enum';
 import { VouchersService } from 'src/vouchers/vouchers.service';
 import { VoucherEnity } from 'src/vouchers/entities/voucher.entity';
 import { checkText } from 'src/utils/common/CheckText';
+import * as XLSX from 'xlsx';
+import { Response } from 'express';
+import {
+  Document,
+  Packer,
+  Paragraph,
+  TextRun,
+  Table,
+  TableCell,
+  TableRow,
+  WidthType,
+} from 'docx';
 
 @Injectable()
 export class OrdersService {
@@ -423,5 +435,167 @@ export class OrdersService {
         status,
       );
     }
+  }
+
+  async exportDataOrder(
+    res: Response,
+    currentStore: StoreEntity,
+  ): Promise<void> {
+    const orders = await this.orderRepository.find({
+      where: {
+        store: { id: currentStore.id },
+      },
+      relations: {
+        employee: true,
+        payment: true,
+      },
+    });
+    const data = orders.map((order, index: number) => ({
+      id: index + 1,
+      quantity_product: order.quantityProduct,
+      total_price: order.total,
+      money_discount: order.moneyDiscount,
+      time_buy: order.timeBuy,
+      employee: order.employee
+        ? order.employee.firstName + ' ' + order.employee.lastName
+        : '',
+      payment_method: order.payment.paymentMethod,
+      payment_date: order.payment.paymentDate,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Orders');
+    // Ghi file Excel vào buffer
+    const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+    // Thiết lập header để tải file Excel
+    res.setHeader('Content-Disposition', 'attachment; filename=orders.xlsx');
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+
+    // Gửi file Excel về phía client
+    res.send(buffer);
+  }
+
+  async exportDocxOrder(
+    res: Response,
+    currentStore: StoreEntity,
+  ): Promise<any> {
+    const orders = await this.orderRepository.find({
+      where: {
+        store: {
+          id: currentStore.id,
+        },
+      },
+      relations: {
+        employee: true,
+        payment: true,
+      },
+    });
+
+    const row = orders.map((order, index: number) => {
+      return new TableRow({
+        children: [
+          new TableCell({
+            children: [new Paragraph(index.toString())],
+          }),
+          new TableCell({
+            children: [
+              new Paragraph(
+                order.employee
+                  ? order.employee.firstName + ' ' + order.employee.lastName
+                  : ' ',
+              ),
+            ],
+          }),
+          new TableCell({
+            children: [new Paragraph(order.quantityProduct.toString())],
+          }),
+          new TableCell({
+            children: [new Paragraph(order.total.toString())],
+          }),
+          new TableCell({
+            children: [new Paragraph(order.moneyDiscount.toString())],
+          }),
+          new TableCell({
+            children: [new Paragraph(order.timeBuy.toISOString())],
+          }),
+          new TableCell({
+            children: [new Paragraph(order.payment.paymentDate.toISOString())],
+          }),
+          new TableCell({
+            children: [new Paragraph(order.payment.paymentMethod)],
+          }),
+        ],
+      });
+    });
+
+    const table = new Table({
+      width: { size: 100, type: WidthType.PERCENTAGE },
+      rows: [
+        new TableRow({
+          children: [
+            new TableCell({
+              children: [new Paragraph('STT')],
+            }),
+            new TableCell({
+              children: [new Paragraph('Name')],
+            }),
+            new TableCell({
+              children: [new Paragraph('Quantity')],
+            }),
+            new TableCell({
+              children: [new Paragraph('Total')],
+            }),
+            new TableCell({
+              children: [new Paragraph('Discount')],
+            }),
+            new TableCell({
+              children: [new Paragraph('Date Bought')],
+            }),
+            new TableCell({
+              children: [new Paragraph('Date Payment')],
+            }),
+            new TableCell({
+              children: [new Paragraph('Method Payment')],
+            }),
+          ],
+        }),
+        ...row,
+      ],
+    });
+
+    const docx = new Document({
+      sections: [
+        {
+          properties: {},
+          children: [
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: 'Order Report',
+                  bold: true,
+                  size: 20,
+                }),
+              ],
+              heading: 'Heading1',
+            }),
+            table,
+          ],
+        },
+      ],
+    });
+
+    const buffer = await Packer.toBuffer(docx);
+
+    res.setHeader('Content-Disposition', 'attachment; filename=orders.docx');
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    );
+    res.send(buffer);
   }
 }
