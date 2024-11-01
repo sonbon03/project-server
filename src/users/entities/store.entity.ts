@@ -14,6 +14,7 @@ import {
 } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { UserEntity } from './user.entity';
+import { StatisticEntity } from 'src/statistic/entities/statistic.entity';
 
 @Entity('stores')
 export class StoreEntity {
@@ -52,4 +53,7 @@ export class StoreEntity {
 
   @OneToMany(() => VoucherEnity, (vou) => vou.store)
   vouchers: VoucherEnity[];
+
+  @OneToMany(() => StatisticEntity, (statis) => statis.store)
+  statistics: StatisticEntity[];
 }

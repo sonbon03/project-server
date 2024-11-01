@@ -14,6 +14,7 @@ import { PromotionModule } from './promotion/promotion.module';
 import { OrdersModule } from './orders/orders.module';
 import { VouchersModule } from './vouchers/vouchers.module';
 import { MailService } from './mail/mail.service';
+import { StatisticModule } from './statistic/statistic.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { MailService } from './mail/mail.service';
     PromotionModule,
     OrdersModule,
     VouchersModule,
+    StatisticModule,
   ],
   controllers: [AppController],
   providers: [AppService, MailService],
