@@ -22,9 +22,6 @@ export class StoreEntity {
   id: string = uuidv4();
 
   @Column()
-  name: string;
-
-  @Column()
   typeStore: string;
 
   @Column()

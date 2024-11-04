@@ -15,15 +15,14 @@ import { CurrentUser } from 'src/utils/decoratores/current-user.decoratore';
 import { Roles } from 'src/utils/enums/user-roles.enum';
 import { AuthenticationGuard } from 'src/utils/guards/authentication.guard';
 import { AuthorizeGuard } from 'src/utils/guards/authorization.guard';
-import { AdminDto } from './dto/admin.dto';
 import { CreateUserStoreDto } from './dto/create-store-user.dto';
 import { SignInDto } from './dto/signin.dto';
-import { AdminEntity } from './entities/admin.entity';
 import { UserEntity } from './entities/user.entity';
 import { UsersService } from './users.service';
 import { Status } from 'src/utils/enums/user-status.enum';
 import { UpdateStoreStatus } from './dto/update.store.dto';
 import { TypeCurrent } from 'src/utils/middlewares/current-user.middleware';
+import { CreateUserDto } from './dto/create-user.dto';
 
 @Controller('users')
 export class UsersController {
@@ -31,9 +30,9 @@ export class UsersController {
 
   @Post('signup')
   async signup(
-    @Body() adminCreateDto: AdminDto,
+    @Body() userCreateDto: CreateUserDto,
   ): Promise<{ user: UserEntity }> {
-    return { user: await this.usersService.signup(adminCreateDto) };
+    return { user: await this.usersService.signup(userCreateDto) };
   }
 
   @Post('signin')
@@ -51,8 +50,9 @@ export class UsersController {
     }
     const accessToken = await this.usersService.accessToken(user);
     const type = process.env.ACCESS_TOKEN_TYPE;
+    const time = process.env.ACCESS_TOKEN_EXPIRE_TIME;
     return {
-      data: { accessToken, user, type },
+      data: { accessToken, user, type, time },
     };
   }
 
@@ -79,11 +79,11 @@ export class UsersController {
   @Post('moderator')
   async createModerator(
     @Body() createUserStoreDto: CreateUserStoreDto,
-    @CurrentUser() currentAdmin: AdminEntity,
+    @CurrentUser() currentUser: UserEntity,
   ) {
     return await this.usersService.createModerator(
       createUserStoreDto,
-      currentAdmin,
+      currentUser,
     );
   }
 
@@ -118,29 +118,6 @@ export class UsersController {
     );
   }
 
-  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
-  // @Post('staff')
-  // async createStaff(
-  //   @Body() createStaff: UserDto,
-  //   @CurrentStore() currentStore: StoreEntity,
-  // ): Promise<UserEntity> {
-  //   return await this.usersService.createStaff(createStaff, currentStore);
-  // }
-
-  // @Get('staff')
-  // async getAllStaff(
-  //   @CurrentStore() currentStore: StoreEntity,
-  //   @Query('page') page: number = 1,
-  //   @Query('limit') limit: number = 10,
-  // ): Promise<{
-  //   data: UserEntity[];
-  //   currentPage: number;
-  //   totalPages: number;
-  //   totalItems: number;
-  // }> {
-  //   return await this.usersService.getAllStaff(currentStore, page, limit);
-  // }
-
   @Get('paginate')
   async findStorePaginate(
     @Query('page') page: number = 1,
@@ -163,7 +140,6 @@ export class UsersController {
     return await this.usersService.findOne(id);
   }
 
-  // @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SUPERADMIN]))
   @Delete(':id')
   async remove(@Param('id') id: string): Promise<any[]> {
     return await this.usersService.remove(id);

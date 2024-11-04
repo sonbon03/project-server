@@ -237,7 +237,12 @@ export class UsersService {
         email: user.email,
       },
       process.env.ACCESS_TOKEN_SECRET_KEY,
-      { expiresIn: process.env.ACCESS_TOKEN_EXPIRE_TIME },
+      {
+        expiresIn:
+          user.roles === Roles.MODERATOR
+            ? process.env.ACCESS_TOKEN_MODERATOR_TIME
+            : process.env.ACCESS_TOKEN_EXPIRE_TIME,
+      },
     );
   }
 

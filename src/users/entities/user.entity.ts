@@ -1,19 +1,17 @@
 import { Roles } from 'src/utils/enums/user-roles.enum';
+import { Status } from 'src/utils/enums/user-status.enum';
 import {
   Column,
   CreateDateColumn,
   Entity,
   JoinColumn,
-  ManyToOne,
   OneToOne,
   PrimaryGeneratedColumn,
   Timestamp,
   UpdateDateColumn,
 } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
-import { AdminEntity } from './admin.entity';
 import { StoreEntity } from './store.entity';
-import { Status } from 'src/utils/enums/user-status.enum';
 
 @Entity('users')
 export class UserEntity {
@@ -35,23 +33,11 @@ export class UserEntity {
   @Column({ type: 'enum', enum: Roles, default: Roles.ADMIN })
   roles: Roles;
 
-  // @Column({ nullable: true })
-  // firstName: string;
+  @Column()
+  name: string;
 
-  // @Column({ nullable: true })
-  // lastName: string;
-
-  // @Column({ nullable: true })
-  // birthday: Date;
-
-  // @Column({ type: 'enum', enum: Gender, nullable: true })
-  // gender: Gender;
-
-  // @Column({ nullable: true })
-  // phone: string;
-
-  // @Column({ type: 'decimal', precision: 10, scale: 3, default: 0 })
-  // salary: number;
+  @Column({ nullable: null })
+  phone: string;
 
   @Column({ type: 'uuid', nullable: true })
   storeId: string;
@@ -74,7 +60,4 @@ export class UserEntity {
 
   // @Column({ default: false })
   // emailVerified: boolean;
-
-  @ManyToOne(() => AdminEntity, (admin) => admin.users)
-  admin: AdminEntity;
 }

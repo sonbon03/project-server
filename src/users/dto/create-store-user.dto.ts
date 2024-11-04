@@ -4,7 +4,7 @@ import { StoreEntity } from '../entities/store.entity';
 
 import { UserEntity } from '../entities/user.entity';
 import { StoreDto } from './store.dto';
-import { UserDto } from './user.dto';
+import { UserDto } from './create-user.dto';
 
 export class CreateUserStoreDto {
   @Type(() => StoreDto)

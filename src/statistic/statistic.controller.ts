@@ -5,6 +5,7 @@ import { StatisticResponseDto } from './dto/statistic-response.dto';
 @Controller('statistic')
 export class StatisticController {
   constructor(private readonly statisticService: StatisticService) {}
+
   @Get('/day')
   async getStatisticsForDay(
     @Query('date') date: string,
