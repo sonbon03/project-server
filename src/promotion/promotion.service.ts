@@ -8,6 +8,7 @@ import { UpdatePromotionDto } from './dto/update-promotion.dto';
 import { PromotionEntity } from './entities/promotion.entity';
 import { ProductAttributeEntity } from 'src/products/entities/product-attribute.entity';
 import { checkText } from 'src/utils/common/CheckText';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class PromotionService {
@@ -139,6 +140,23 @@ export class PromotionService {
       });
       return { data: promotion };
     }
+  }
+
+  @Cron(CronExpression.EVERY_HOUR)
+  async handleCheckTime() {
+    const activePromotions = await this.promotionRepository.find();
+
+    await Promise.all(
+      activePromotions.map(async (promotion) => {
+        try {
+          await this.checkTimePromotion(promotion.id);
+        } catch (error) {
+          throw new BadRequestException(
+            `Error checking promotion with ID ${promotion.id}:`,
+          );
+        }
+      }),
+    );
   }
 
   async remove(id: string) {
