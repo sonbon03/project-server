@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
+import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { StatisticEntity } from './entities/statistic.entity';
+import { CreateStatisticDto } from './dto/create-statistic.dto';
 import { StatisticResponseDto } from './dto/statistic-response.dto';
+import { StatisticEntity } from './entities/statistic.entity';
 
 @Injectable()
 export class StatisticService {
@@ -65,5 +67,86 @@ export class StatisticService {
       endDate: statistic.endDate,
       store: statistic.store,
     }));
+  }
+
+  @Cron('0 0 * * *')
+  async handleCron() {
+    const today = new Date();
+
+    const previousDayStatistics = await this.getStatisticsForPreviousDay(today);
+
+    const createStatisticDto: CreateStatisticDto = {
+      totalProducts: previousDayStatistics.totalProducts,
+      totalRevenue: previousDayStatistics.totalRevenue,
+      totalDiscount: previousDayStatistics.totalDiscount,
+      totalOrders: previousDayStatistics.totalOrders,
+      startDate: new Date(today.setDate(today.getDate() - 1)),
+      endDate: new Date(today),
+    };
+
+    await this.createStatistic(createStatisticDto);
+  }
+
+  private async getStatisticsForPreviousDay(date: Date): Promise<{
+    totalProducts: number;
+    totalRevenue: number;
+    totalDiscount: number;
+    totalOrders: number;
+  }> {
+    const previousDay = new Date(date);
+    previousDay.setDate(previousDay.getDate() - 1);
+    const startOfDay = new Date(previousDay);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(previousDay);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const totalOrders = await this.statisticRepository.count({
+      where: {
+        startDate: startOfDay,
+        endDate: endOfDay,
+      },
+    });
+
+    const statistics = await this.statisticRepository
+      .createQueryBuilder('statistic')
+      .select('SUM(statistic.totalProducts)', 'totalProducts')
+      .addSelect('SUM(statistic.totalRevenue)', 'totalRevenue')
+      .addSelect('SUM(statistic.totalDiscount)', 'totalDiscount')
+      .where('statistic.startDate >= :start AND statistic.endDate <= :end', {
+        start: startOfDay,
+        end: endOfDay,
+      })
+      .getRawOne();
+
+    return {
+      totalProducts: statistics.totalProducts
+        ? Number(statistics.totalProducts)
+        : 0,
+      totalRevenue: statistics.totalRevenue
+        ? Number(statistics.totalRevenue)
+        : 0,
+      totalDiscount: statistics.totalDiscount
+        ? Number(statistics.totalDiscount)
+        : 0,
+      totalOrders: totalOrders,
+    };
+  }
+
+  private async createStatistic(
+    createStatisticDto: CreateStatisticDto,
+  ): Promise<StatisticResponseDto> {
+    const statistic = this.statisticRepository.create(createStatisticDto);
+    const savedStatistic = await this.statisticRepository.save(statistic);
+
+    return {
+      id: savedStatistic.id,
+      totalProducts: savedStatistic.totalProducts,
+      totalRevenue: savedStatistic.totalRevenue,
+      totalDiscount: savedStatistic.totalDiscount,
+      totalOrders: savedStatistic.totalOrders,
+      startDate: savedStatistic.startDate,
+      endDate: savedStatistic.endDate,
+      store: savedStatistic.store,
+    };
   }
 }

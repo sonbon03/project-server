@@ -1,14 +1,11 @@
 import {
   BadRequestException,
-  forwardRef,
-  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CategoriesService } from 'src/categories/categories.service';
 import { PromotionEntity } from 'src/promotion/entities/promotion.entity';
-import { PromotionService } from 'src/promotion/promotion.service';
 import { StoreEntity } from 'src/users/entities/store.entity';
 import {
   StatusAttibute,
@@ -34,8 +31,6 @@ export class ProductsService {
     private readonly productAttributeRepository: Repository<ProductAttributeEntity>,
     private readonly categoryService: CategoriesService,
     private readonly warehouseService: WarehousesService,
-    @Inject(forwardRef(() => PromotionService))
-    private readonly promotionService: PromotionService,
   ) {}
   // async create(
   //   createProductAttributeDto: CreateProductAttributeDto,
@@ -217,11 +212,6 @@ export class ProductsService {
     const result = await Promise.all(
       products.map(async (product) => {
         const productAttribute = await this.findOneProductAttribute(product.id);
-        if (productAttribute.promotion) {
-          await this.promotionService.checkTimePromotion(
-            productAttribute.promotion.id,
-          );
-        }
 
         return productAttribute;
       }),
