@@ -17,7 +17,7 @@ import { AuthenticationGuard } from 'src/utils/guards/authentication.guard';
 import { AuthorizeGuard } from 'src/utils/guards/authorization.guard';
 import { AdminDto } from './dto/admin.dto';
 import { CreateUserStoreDto } from './dto/create-store-user.dto';
-import { SignInDto } from './dto/signin.dto';
+import { EmailDto, SignInDto } from './dto/signin.dto';
 import { AdminEntity } from './entities/admin.entity';
 import { UserEntity } from './entities/user.entity';
 import { UsersService } from './users.service';
@@ -67,6 +67,13 @@ export class UsersController {
     }
   }
 
+  @Get('verify/test')
+  async verifyEmailTest(@Query('token') token: EmailDto) {
+    const isValid = await this.usersService.test(token);
+
+    console.log(isValid);
+    return isValid;
+  }
   // @UseGuards(AuthenticationGuard)
   // @Get('profile')
   // async profile(@CurrentUser() currentAdmin: AdminEntity) {

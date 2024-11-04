@@ -15,7 +15,7 @@ import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { AdminDto } from './dto/admin.dto';
 import { CreateUserStoreDto } from './dto/create-store-user.dto';
-import { SignInDto } from './dto/signin.dto';
+import { EmailDto, SignInDto } from './dto/signin.dto';
 import { AdminEntity } from './entities/admin.entity';
 import { StoreEntity } from './entities/store.entity';
 import { UserEntity } from './entities/user.entity';
@@ -278,6 +278,10 @@ export class UsersService {
     await this.usersRepository.save(user);
 
     return true;
+  }
+
+  async test(token: EmailDto) {
+    return token;
   }
 
   // async createStaff(
