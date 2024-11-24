@@ -32,93 +32,36 @@ export class ProductsService {
     private readonly categoryService: CategoriesService,
     private readonly warehouseService: WarehousesService,
   ) {}
-  // async create(
-  //   createProductAttributeDto: CreateProductAttributeDto,
-  //   currentStore: StoreEntity,
-  // ) {
-  //   const productEntity = new ProductEntity();
-  //   const check = await this.findName(
-  //     createProductAttributeDto.product.name,
-  //     currentStore,
-  //   );
-  //   if (check !== null) {
-  //     throw new BadRequestException('Name exists');
-  //   }
-  //   Object.assign(productEntity, createProductAttributeDto.product);
-  //   const category = await this.categoryService.findOne(
-  //     createProductAttributeDto.product.categoryId,
-  //     currentStore,
-  //   );
-  //   const warehouse = await this.warehouseService.findById(
-  //     createProductAttributeDto.product.warehouseId,
-  //   );
-  //   if (!warehouse) {
-  //     throw new NotFoundException('Warehouses not found');
-  //   }
-  //   productEntity.name = createProductAttributeDto.product.name.toLowerCase();
-  //   productEntity.category = category;
-  //   productEntity.store = currentStore;
-  //   productEntity.warehouse = warehouse;
-
-  //   const productTbl = await this.productRepository.save(productEntity);
-  //   const attributeTbl: AttributeEntity[] = [];
-  //   for (let i = 0; i < createProductAttributeDto.attributes.length; i++) {
-  //     const attribute = {
-  //       ...createProductAttributeDto.attributes[i],
-  //       status: StatusAttibute.HAVE,
-  //     };
-  //     const attri = await this.attributeRepository.save(attribute);
-  //     attributeTbl.push(attri);
-  //   }
-
-  //   const paEntity: ProductAttributeEntity[] = [];
-
-  //   for (let i = 0; i < attributeTbl.length; i++) {
-  //     const productAttributeEntity = new ProductAttributeEntity();
-  //     productAttributeEntity.product = productTbl;
-  //     productAttributeEntity.attribute = attributeTbl[i];
-  //     paEntity.push(productAttributeEntity);
-  //   }
-  //   await this.productAttributeRepository
-  //     .createQueryBuilder()
-  //     .insert()
-  //     .into(ProductAttributeEntity)
-  //     .values(paEntity)
-  //     .execute();
-  //   return await this.findOneProductAttribute(productTbl.id);
-  // }
-
-  // ============================== BEGIN: Create PRODUCTS ==============================
   async create(
     createProductAttributeDto: CreateProductAttributeDto,
     currentStore: StoreEntity,
   ) {
-    const check = await this.findName(
-      createProductAttributeDto.product.name,
-      currentStore,
-    );
-    if (check !== null) {
-      throw new BadRequestException('Name exists');
-    }
     const productEntity = new ProductEntity();
+    for (const attri of createProductAttributeDto.attributes) {
+      const check = await this.findKey(attri.key, currentStore);
+      if (check !== null) {
+        throw new BadRequestException('Key exists');
+      }
+    }
+
     Object.assign(productEntity, createProductAttributeDto.product);
-    productEntity.name = createProductAttributeDto.product.name.toLowerCase();
-    productEntity.store = currentStore;
     const category = await this.categoryService.findOne(
       createProductAttributeDto.product.categoryId,
       currentStore,
     );
-    productEntity.category = category;
     const warehouse = await this.warehouseService.findById(
       createProductAttributeDto.product.warehouseId,
     );
     if (!warehouse) {
       throw new NotFoundException('Warehouses not found');
     }
+    productEntity.name = createProductAttributeDto.product.name.toLowerCase();
+    productEntity.category = category;
     productEntity.warehouse = warehouse;
-    const productTbl = await this.productRepository.save(productEntity);
+    productEntity.store = currentStore;
 
-    const attributeTbl = [];
+    const productTbl = await this.productRepository.save(productEntity);
+    const attributeTbl: AttributeEntity[] = [];
     for (let i = 0; i < createProductAttributeDto.attributes.length; i++) {
       const attribute = {
         ...createProductAttributeDto.attributes[i],
@@ -128,36 +71,93 @@ export class ProductsService {
       attributeTbl.push(attri);
     }
 
-    const paEntity = await this.createProductAttributeEntities(
-      productTbl,
-      attributeTbl,
-    );
-    await this.saveProductAttributeEntities(paEntity);
-    return await this.findOneProductAttribute(productTbl.id);
-  }
-
-  async createProductAttributeEntities(
-    productEntity: ProductEntity,
-    attributeTbl: AttributeEntity[],
-  ) {
     const paEntity: ProductAttributeEntity[] = [];
+
     for (let i = 0; i < attributeTbl.length; i++) {
       const productAttributeEntity = new ProductAttributeEntity();
-      productAttributeEntity.product = productEntity;
+      productAttributeEntity.product = productTbl;
       productAttributeEntity.attribute = attributeTbl[i];
       paEntity.push(productAttributeEntity);
     }
-    return paEntity;
-  }
-
-  async saveProductAttributeEntities(paEntity: ProductAttributeEntity[]) {
     await this.productAttributeRepository
       .createQueryBuilder()
       .insert()
       .into(ProductAttributeEntity)
       .values(paEntity)
       .execute();
+    return await this.findOneProductAttribute(productTbl.id, currentStore);
   }
+
+  // ============================== BEGIN: Create PRODUCTS ==============================
+  // async create(
+  //   createProductAttributeDto: CreateProductAttributeDto,
+  //   currentStore: StoreEntity,
+  // ) {
+  //   const check = await this.findName(
+  //     createProductAttributeDto.product.name,
+  //     currentStore,
+  //   );
+  //   if (check !== null) {
+  //     throw new BadRequestException('Name exists');
+  //   }
+  //   const productEntity = new ProductEntity();
+  //   Object.assign(productEntity, createProductAttributeDto.product);
+  //   productEntity.name = createProductAttributeDto.product.name.toLowerCase();
+  //   productEntity.store = currentStore;
+  //   const category = await this.categoryService.findOne(
+  //     createProductAttributeDto.product.categoryId,
+  //     currentStore,
+  //   );
+  //   productEntity.category = category;
+  //   const warehouse = await this.warehouseService.findById(
+  //     createProductAttributeDto.product.warehouseId,
+  //   );
+  //   if (!warehouse) {
+  //     throw new NotFoundException('Warehouses not found');
+  //   }
+  //   productEntity.warehouse = warehouse;
+  //   const productTbl = await this.productRepository.save(productEntity);
+
+  //   const attributeTbl = [];
+  //   for (let i = 0; i < createProductAttributeDto.attributes.length; i++) {
+  //     const attribute = {
+  //       ...createProductAttributeDto.attributes[i],
+  //       status: StatusAttibute.HAVE,
+  //     };
+  //     const attri = await this.attributeRepository.save(attribute);
+  //     attributeTbl.push(attri);
+  //   }
+
+  //   const paEntity = await this.createProductAttributeEntities(
+  //     productTbl,
+  //     attributeTbl,
+  //   );
+  //   await this.saveProductAttributeEntities(paEntity);
+  //   return await this.findOneProductAttribute(productTbl.id);
+  // }
+
+  // async createProductAttributeEntities(
+  //   productEntity: ProductEntity,
+  //   attributeTbl: AttributeEntity[],
+  // ) {
+  //   const paEntity: ProductAttributeEntity[] = [];
+  //   for (let i = 0; i < attributeTbl.length; i++) {
+  //     const productAttributeEntity = new ProductAttributeEntity();
+  //     productAttributeEntity.product = productEntity;
+  //     productAttributeEntity.attribute = attributeTbl[i];
+  //     paEntity.push(productAttributeEntity);
+  //   }
+  //   return paEntity;
+  // }
+
+  // async saveProductAttributeEntities(paEntity: ProductAttributeEntity[]) {
+  //   await this.productAttributeRepository
+  //     .createQueryBuilder()
+  //     .insert()
+  //     .into(ProductAttributeEntity)
+  //     .values(paEntity)
+  //     .execute();
+  // }
 
   // ============================== END: Create PRODUCTS ==============================
 
@@ -174,10 +174,12 @@ export class ProductsService {
     return products;
   }
 
-  async findName(name: string, currentStore: StoreEntity) {
-    const nameProduct = name.toLowerCase();
+  async findKey(key: string, currentStore: StoreEntity) {
     const product = await this.productRepository.findOne({
-      where: { name: nameProduct, store: { id: currentStore.id } },
+      where: {
+        productAttributes: { attribute: { key: key } },
+        store: { id: currentStore.id },
+      },
     });
     if (!product) return null;
     return product.id;
@@ -211,14 +213,14 @@ export class ProductsService {
     });
     const result = await Promise.all(
       products.map(async (product) => {
-        const productAttribute = await this.findOneProductAttribute(product.id);
+        const productAttribute = await this.findOneProductAttribute(
+          product.id,
+          currentStore,
+        );
 
         return productAttribute;
       }),
     );
-    // const result = await Promise.all(
-    //   products.map((product) => this.findOneProductAttribute(product.id)),
-    // );
     const totalPages = Math.ceil(total / limit);
     return {
       items: result,
@@ -233,10 +235,18 @@ export class ProductsService {
     id_product: string,
   ): Promise<ProductAttributeEntity> {
     const attribute = await this.productAttributeRepository.findOne({
-      where: { product: { id: id_product }, attribute: { id: id_attribute } },
+      where: {
+        product: {
+          id: id_product,
+        },
+        attribute: { id: id_attribute },
+      },
       relations: {
+        product: {
+          promotion: true,
+          store: true,
+        },
         attribute: true,
-        promotion: true,
       },
     });
     if (!attribute)
@@ -244,17 +254,24 @@ export class ProductsService {
     return attribute;
   }
 
-  async findOneProductAttribute(productId: string) {
-    const productAttribute = await this.productAttributeRepository.find({
-      where: { product: { id: productId } },
+  async findOneProductAttribute(productId: string, currentStote: StoreEntity) {
+    const productsAttri = await this.productAttributeRepository.find({
+      where: {
+        product: {
+          id: productId,
+          store: {
+            id: currentStote.id,
+          },
+        },
+      },
       relations: {
-        product: true,
         attribute: true,
-        promotion: true,
+        product: {
+          promotion: true,
+        },
       },
     });
-    if (!productAttribute || productAttribute.length === 0)
-      throw new BadRequestException('ProductAttribute not found!');
+    if (!productsAttri) throw new BadRequestException('Products not found!');
 
     const result: {
       product: ProductEntity;
@@ -263,12 +280,12 @@ export class ProductsService {
       };
       promotion: PromotionEntity;
     } = {
-      product: productAttribute[0].product,
+      product: productsAttri[0].product,
       attributes: {},
-      promotion: productAttribute[0].promotion,
+      promotion: productsAttri[0].product.promotion,
     };
 
-    productAttribute.forEach((productAttr, index) => {
+    productsAttri.forEach((productAttr, index) => {
       result.attributes[index] = productAttr.attribute;
     });
 
@@ -280,37 +297,36 @@ export class ProductsService {
     fields: Partial<UpdateProductAttributeDto>,
     currentStore: StoreEntity,
   ) {
-    const data = await this.findOneProductAttribute(id);
-    Object.assign(data.product, fields.product);
+    const data = await this.findOneProductAttribute(id, currentStore);
     const product: ProductEntity = Object.assign(data.product, fields.product);
-    await this.productRepository.save(product);
-    if (fields.attributes.length < Object.keys(data.attributes).length) {
-      for (let i = 0; i < Object.keys(data.attributes).length; i++) {
-        if (!fields.attributes[i]) {
-          await this.removeAttribute(data.attributes[i].id, data.product.id);
-        } else {
-          const attribute: AttributeEntity = Object.assign(
-            data.attributes[i],
-            fields.attributes[i],
-          );
-          await this.attributeRepository.save(attribute);
-        }
-      }
-    } else {
-      Object.entries(fields.attributes).forEach(async ([key, attri]) => {
-        if (Object.keys(data.attributes).length < Number(key) + 1) {
-          await this.addAttribute(attri, data.product.id, currentStore);
-        } else {
-          const attribute: AttributeEntity = Object.assign(
-            data.attributes[key],
-            attri,
-          );
-          await this.attributeRepository.save(attribute);
-        }
-      });
-    }
+    return await this.productRepository.save(product);
+    // if (fields.attributes.length < Object.keys(data.attributes).length) {
+    //   for (let i = 0; i < Object.keys(data.attributes).length; i++) {
+    //     if (!fields.attributes[i]) {
+    //       await this.removeAttribute(data.attributes[i].id, data.product.id);
+    //     } else {
+    //       const attribute: AttributeEntity = Object.assign(
+    //         data.attributes[i],
+    //         fields.attributes[i],
+    //       );
+    //       await this.attributeRepository.save(attribute);
+    //     }
+    //   }
+    // } else {
+    // Object.entries(fields.attributes).forEach(async ([key, attri]) => {
+    //   if (Object.keys(data.attributes).length < Number(key) + 1) {
+    //     await this.addAttribute(attri, data.product.id, currentStore);
+    //   } else {
+    //     const attribute: AttributeEntity = Object.assign(
+    //       data.attributes[key],
+    //       attri,
+    //     );
+    //     await this.attributeRepository.save(attribute);
+    //   }
+    // });
+    // }
 
-    return await this.findOneProductAttribute(data.product.id);
+    // return await this.findOneProductAttribute(data.product.id);
   }
 
   async addAttribute(
@@ -372,12 +388,10 @@ export class ProductsService {
     return product;
   }
 
-  async addPromotion(id: string, promotion: PromotionEntity) {
-    const products = await this.productAttributeRepository.find({
+  async addPromotion(ids: string, promotion: PromotionEntity) {
+    const products = await this.productRepository.find({
       where: {
-        product: {
-          id: id,
-        },
+        id: ids,
       },
     });
     if (!products) {
@@ -389,17 +403,19 @@ export class ProductsService {
     }
   }
 
-  async updatePromotion(id: string) {
-    const product = await this.productAttributeRepository.findOne({
+  async removePromotionProducts(idsPromotion: string) {
+    const products = await this.productRepository.find({
       where: {
-        id: id,
+        promotion: { id: idsPromotion },
       },
     });
-    if (!product) {
+    if (!products) {
       throw new BadRequestException('Product not found');
     }
-    product.promotion = null;
-    return await this.productAttributeRepository.save(product);
+    for (let i = 0; i < products.length; i++) {
+      products[i].promotion = null;
+      await this.productAttributeRepository.save(products);
+    }
   }
 
   async updateStock(
@@ -408,21 +424,22 @@ export class ProductsService {
     stock: number,
     status: string,
   ) {
-    let product = await this.findOneAttribute(id_attribute, id_product);
+    let productAttri = await this.findOneAttribute(id_attribute, id_product);
     if (status === StatusPayment.PAID) {
-      if (product.attribute.amount < stock)
+      if (productAttri.attribute.amount < stock)
         throw new BadRequestException('Insufficient product');
-      product.attribute.amount -= stock;
-      if (product.promotion) {
-        product.promotion.quantity -= 1;
-        if (product.promotion.quantity === 0) product.promotion = null;
+      productAttri.attribute.amount -= stock;
+      if (productAttri.product.promotion) {
+        productAttri.product.promotion.quantity -= 1;
+        if (productAttri.product.promotion.quantity === 0)
+          productAttri.product.promotion = null;
       }
-      if (product.attribute.amount === 0)
-        product.attribute.status === StatusAttibute.NOT;
+      if (productAttri.attribute.amount === 0)
+        productAttri.attribute.status === StatusAttibute.NOT;
     } else {
-      product.attribute.amount += stock;
+      productAttri.attribute.amount += stock;
     }
-    product = await this.productAttributeRepository.save(product);
-    return product;
+    productAttri = await this.productAttributeRepository.save(productAttri);
+    return productAttri;
   }
 }

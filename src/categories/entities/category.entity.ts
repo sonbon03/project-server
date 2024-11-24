@@ -20,6 +20,9 @@ export class CategoryEntity {
   @Column()
   name: string;
 
+  @Column()
+  key: string;
+
   @ManyToOne(() => StoreEntity, (store) => store.category)
   store: StoreEntity;
 

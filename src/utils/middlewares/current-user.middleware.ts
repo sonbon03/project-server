@@ -5,6 +5,7 @@ import { verify } from 'jsonwebtoken';
 import { StoreEntity } from 'src/users/entities/store.entity';
 import { UsersService } from 'src/users/users.service';
 import { Roles } from '../enums/user-roles.enum';
+import { UserEntity } from 'src/users/entities/user.entity';
 
 export interface TypeCurrent {
   idAdmin: string;
@@ -16,7 +17,7 @@ export interface TypeCurrent {
 declare global {
   namespace Express {
     interface Request {
-      currentUser?: TypeCurrent;
+      currentUser?: UserEntity;
     }
   }
 }

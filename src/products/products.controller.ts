@@ -61,8 +61,11 @@ export class ProductsController {
   }
 
   @Get('product-attribute/:id')
-  async findOneProductAttribute(@Param('id') id: string) {
-    return this.productsService.findOneProductAttribute(id);
+  async findOneProductAttribute(
+    @Param('id') id: string,
+    @CurrentStore() currentStore: StoreEntity,
+  ) {
+    return this.productsService.findOneProductAttribute(id, currentStore);
   }
 
   @Patch(':id')

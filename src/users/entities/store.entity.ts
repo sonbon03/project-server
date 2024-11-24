@@ -3,18 +3,18 @@ import { EmployeeEntity } from 'src/employees/entities/employee.entity';
 import { OrderEntity } from 'src/orders/entities/order.entity';
 import { ProductEntity } from 'src/products/entities/product.entity';
 import { PromotionEntity } from 'src/promotion/entities/promotion.entity';
+import { StatisticEntity } from 'src/statistic/entities/statistic.entity';
 import { VoucherEnity } from 'src/vouchers/entities/voucher.entity';
 import { WarehouseEntity } from 'src/warehouses/entities/warehouse.entity';
 import {
   Column,
   Entity,
+  ManyToOne,
   OneToMany,
-  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { UserEntity } from './user.entity';
-import { StatisticEntity } from 'src/statistic/entities/statistic.entity';
 
 @Entity('stores')
 export class StoreEntity {
@@ -27,7 +27,7 @@ export class StoreEntity {
   @Column()
   address: string;
 
-  @OneToOne(() => UserEntity, (user) => user.store, { cascade: true })
+  @ManyToOne(() => UserEntity, (user) => user.store, { cascade: true })
   user: UserEntity;
 
   @OneToMany(() => EmployeeEntity, (emp) => emp.store)

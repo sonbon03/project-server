@@ -1,5 +1,6 @@
 import { StatusAttibute } from 'src/utils/enums/user-status.enum';
 import {
+  Check,
   Column,
   CreateDateColumn,
   Entity,
@@ -19,15 +20,20 @@ export class AttributeEntity {
   @Column()
   key: string;
 
+  @Column()
+  value: string;
+
   @Column({ type: 'enum', enum: StatusAttibute })
   status: StatusAttibute;
 
   @Column()
   description: string;
 
+  @Check('"amount" > 0')
   @Column()
   amount: number;
 
+  @Check('"price" > 0')
   @Column({ type: 'decimal', precision: 10, scale: 3 })
   price: number;
 

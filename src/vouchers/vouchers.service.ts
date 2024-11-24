@@ -19,11 +19,10 @@ export class VouchersService {
         'The voucher name contains special characters',
       );
     }
-    const lowerNameVoucher = createVoucherDto.name.toLowerCase();
-    const findName = await this.vouchersRepository.findOne({
-      where: { name: lowerNameVoucher },
+    const checkKey = await this.vouchersRepository.findOne({
+      where: { key: createVoucherDto.key, store: { id: currentStore.id } },
     });
-    if (findName) throw new BadRequestException('Voucher exists');
+    if (checkKey) throw new BadRequestException('Voucher exists');
     const voucher = await this.vouchersRepository.create(createVoucherDto);
     voucher.store = currentStore;
     return await this.vouchersRepository.save(voucher);
@@ -72,6 +71,10 @@ export class VouchersService {
     fields: Partial<UpdateVoucherDto>,
     currentStore: StoreEntity,
   ) {
+    const checkKey = await this.vouchersRepository.findOne({
+      where: { key: fields.key, store: { id: currentStore.id } },
+    });
+    if (checkKey) throw new BadRequestException('Key exists');
     const voucher = await this.findOne(id, currentStore);
     Object.assign(voucher, fields);
     return await this.vouchersRepository.save(voucher);

@@ -1,3 +1,4 @@
+import { OrderProductEntity } from 'src/orders/entities/order-product.entity';
 import {
   CreateDateColumn,
   Entity,
@@ -10,8 +11,6 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { AttributeEntity } from './attribute.entity';
 import { ProductEntity } from './product.entity';
-import { PromotionEntity } from 'src/promotion/entities/promotion.entity';
-import { OrderProductEntity } from 'src/orders/entities/order-product.entity';
 
 @Entity({ name: 'product_attribute' })
 export class ProductAttributeEntity {
@@ -31,9 +30,6 @@ export class ProductAttributeEntity {
 
   @ManyToOne(() => ProductEntity, (prod) => prod.productAttributes)
   product: ProductEntity;
-
-  @ManyToOne(() => PromotionEntity, (prom) => prom.products, { cascade: true })
-  promotion: PromotionEntity;
 
   @OneToMany(
     () => OrderProductEntity,

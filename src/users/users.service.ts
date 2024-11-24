@@ -8,19 +8,17 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { compare, hash } from 'bcrypt';
 import { sign } from 'jsonwebtoken';
 import { MailService } from 'src/mail/mail.service';
+import { checkText } from 'src/utils/common/CheckText';
 import { Roles } from 'src/utils/enums/user-roles.enum';
 import { Status } from 'src/utils/enums/user-status.enum';
-import { TypeCurrent } from 'src/utils/middlewares/current-user.middleware';
 import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
-import { AdminDto } from './dto/admin.dto';
 import { CreateUserStoreDto } from './dto/create-store-user.dto';
 import { SignInDto } from './dto/signin.dto';
-import { AdminEntity } from './entities/admin.entity';
+import { UpdateStoreStatus } from './dto/update.store.dto';
 import { StoreEntity } from './entities/store.entity';
 import { UserEntity } from './entities/user.entity';
-import { UpdateStoreStatus } from './dto/update.store.dto';
-import { checkText } from 'src/utils/common/CheckText';
+import { CreateUserDto } from './dto/create-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -29,29 +27,27 @@ export class UsersService {
     private readonly usersRepository: Repository<UserEntity>,
     @InjectRepository(StoreEntity)
     private readonly storesRepository: Repository<StoreEntity>,
-    @InjectRepository(AdminEntity)
-    private readonly adminRepository: Repository<AdminEntity>,
     private readonly mailService: MailService,
   ) {}
 
-  async signup(adminCreateDto: AdminDto): Promise<any> {
-    const userExists = await this.findUserByEmail(adminCreateDto.email);
+  async signup(userCreateDto: CreateUserDto): Promise<any> {
+    const userExists = await this.findUserByEmail(userCreateDto.email);
     if (userExists) {
       throw new BadRequestException('Email already exists');
     }
-    adminCreateDto.password = await hash(adminCreateDto.password, 10);
+    userCreateDto.password = await hash(userCreateDto.password, 10);
 
     const createAdmin = {
-      phone: adminCreateDto.phone,
-      name: adminCreateDto.name,
+      phone: userCreateDto.phone,
+      name: userCreateDto.name,
     };
 
-    const admin = await this.adminRepository.create(createAdmin);
-    await this.adminRepository.save(admin);
+    const admin = await this.usersRepository.create(createAdmin);
+    await this.usersRepository.save(admin);
 
     const createUser = {
-      email: adminCreateDto.email,
-      password: adminCreateDto.password,
+      email: userCreateDto.email,
+      password: userCreateDto.password,
       admin,
     };
     let user = await this.usersRepository.create(createUser);
@@ -87,20 +83,12 @@ export class UsersService {
       throw new HttpException('Password is not true!', 422);
     }
 
-    const adminExists = await this.adminRepository.findOne({
-      where: { users: { id: userExists.id } },
-    });
     delete userExists.password;
-    const user = {
-      ...userExists,
-      name: !userExists.store
-        ? (adminExists?.name ?? '')
-        : userExists.store.name,
-    };
-    return user;
+
+    return userExists;
   }
 
-  // async profile(currentAdmin: AdminEntity) {
+  // async profile(currentAdmin: UserEntity) {
 
   // }
 
@@ -136,7 +124,6 @@ export class UsersService {
       select: {
         store: {
           id: true,
-          name: true,
           typeStore: true,
           address: true,
         },
@@ -153,7 +140,6 @@ export class UsersService {
       select: {
         store: {
           id: true,
-          name: true,
           typeStore: true,
           address: true,
         },
@@ -165,26 +151,12 @@ export class UsersService {
 
   async findOneAdmin(id: string) {
     const user = await this.usersRepository.findOne({
-      where: { id: id },
+      where: { id: id, roles: Roles.ADMIN },
     });
 
     if (!user) throw new NotFoundException('User is not found!');
-    const admin = await this.adminRepository.findOne({
-      where: { id: user.admin?.id },
-      relations: {
-        users: true,
-      },
-    });
-    if (!admin) throw new NotFoundException('Admin is not found!');
 
-    const data: TypeCurrent = {
-      idAdmin: admin.id,
-      idUser: user.id,
-      idStore: user.store,
-      roles: user.roles,
-    };
-
-    return data;
+    return user;
   }
 
   async findOneStore(id: string) {
@@ -285,60 +257,11 @@ export class UsersService {
     return true;
   }
 
-  // async createStaff(
-  //   user: UserDto,
-  //   currentStore: StoreEntity,
-  // ): Promise<UserEntity> {
-  //   const findStaff = await this.usersRepository.findOneBy({
-  //     email: user.email,
-  //     store: { id: currentStore.id },
-  //   });
-  //   if (findStaff) throw new BadRequestException('Emaill was exists in store');
-  //   user.password = await hash(user.password, 10);
-  //   const staff = await this.usersRepository.create(user);
-  //   staff.roles = Roles.STAFF;
-  //   staff.store = currentStore;
-  //   delete staff.password;
-  //   return await this.usersRepository.save(staff);
-  // }
-
-  // async getAllStaff(
-  //   currentStore: StoreEntity,
-  //   page: number = 1,
-  //   limit: number = 10,
-  // ): Promise<{
-  //   data: UserEntity[];
-  //   currentPage: number;
-  //   totalPages: number;
-  //   totalItems: number;
-  // }> {
-  //   const skip = (page - 1) * limit;
-  //   const take = limit;
-
-  //   const [result, total] = await this.usersRepository.findAndCount({
-  //     where: { store: { id: currentStore.id }, roles: Roles.STAFF },
-  //     skip,
-  //     take,
-  //     order: { createdAt: 'DESC' },
-  //     relations: {
-  //       store: true,
-  //     },
-  //   });
-
-  //   const totalPages = Math.ceil(total / limit);
-  //   return {
-  //     data: result,
-  //     currentPage: Number(page),
-  //     totalPages: totalPages,
-  //     totalItems: total,
-  //   };
-  // }
-
   async createModerator(
     createUserStore: CreateUserStoreDto,
-    currentAdmin: AdminEntity,
+    currentAdmin: UserEntity,
   ) {
-    if (checkText(createUserStore.store.name)) {
+    if (checkText(createUserStore.user.name)) {
       throw new BadRequestException(
         'The category name contains special characters',
       );
@@ -349,39 +272,33 @@ export class UsersService {
     if (findEmail) throw new BadRequestException('Email was exists');
 
     const store = await this.storesRepository.create(createUserStore.store);
+    store.user = currentAdmin;
     await this.storesRepository.save(store);
     let user = await this.usersRepository.create(createUserStore.user);
     user.password = await hash(user.password, 10);
     user.roles = Roles.MODERATOR;
-    const admin = await this.adminRepository.findOne({
-      where: { id: currentAdmin.id },
-    });
-    user.admin = admin;
-    user.store = store;
     user.storeId = store.id;
     user = await this.usersRepository.save(user);
     return user;
   }
 
-  async getAllModerator(currentAdmin: TypeCurrent) {
-    console.log(currentAdmin);
+  async getAllModerator(currentAdmin: UserEntity) {
     const stores = await this.usersRepository.find({
       where: {
-        admin: {
-          id: currentAdmin.idAdmin,
+        store: {
+          user: currentAdmin,
         },
         roles: Roles.MODERATOR,
       },
       relations: {
         store: true,
-        admin: true,
       },
     });
     return stores;
   }
 
   async getModeratorPaginate(
-    currentAdmin: TypeCurrent,
+    currentAdmin: UserEntity,
     page: number = 1,
     limit: number = 10,
   ) {
@@ -390,14 +307,13 @@ export class UsersService {
 
     const [result, total] = await this.usersRepository.findAndCount({
       where: {
-        admin: {
-          id: currentAdmin.idAdmin,
+        store: {
+          user: currentAdmin,
         },
         roles: Roles.MODERATOR,
       },
       relations: {
         store: true,
-        admin: true,
       },
       skip,
       take,
@@ -417,12 +333,14 @@ export class UsersService {
   async updateStatusStore(
     id: string,
     updateStoreStatus: UpdateStoreStatus,
-    currentAdmin: TypeCurrent,
+    currentAdmin: UserEntity,
   ) {
     const store = await this.usersRepository.findOne({
       where: {
         id: id,
-        admin: { id: currentAdmin.idAdmin },
+        store: {
+          user: currentAdmin,
+        },
       },
     });
     if (!store) {

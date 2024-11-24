@@ -1,4 +1,4 @@
-import { ProductAttributeEntity } from 'src/products/entities/product-attribute.entity';
+import { ProductEntity } from 'src/products/entities/product.entity';
 import { StoreEntity } from 'src/users/entities/store.entity';
 import {
   Column,
@@ -27,6 +27,9 @@ export class PromotionEntity {
   quantity: number;
 
   @Column()
+  key: string;
+
+  @Column()
   startDay: Date;
 
   @Column()
@@ -38,8 +41,8 @@ export class PromotionEntity {
   @UpdateDateColumn()
   updatedAt: Timestamp;
 
-  @OneToMany(() => ProductAttributeEntity, (prod) => prod.promotion)
-  products: ProductAttributeEntity[];
+  @OneToMany(() => ProductEntity, (prod) => prod.promotion)
+  products: ProductEntity[];
 
   @ManyToOne(() => StoreEntity, (store) => store.promotions)
   store: StoreEntity;

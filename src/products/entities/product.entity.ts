@@ -1,5 +1,4 @@
 import { CategoryEntity } from 'src/categories/entities/category.entity';
-import { StoreEntity } from 'src/users/entities/store.entity';
 import { WarehouseEntity } from 'src/warehouses/entities/warehouse.entity';
 import {
   Column,
@@ -13,6 +12,8 @@ import {
 } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { ProductAttributeEntity } from './product-attribute.entity';
+import { StoreEntity } from 'src/users/entities/store.entity';
+import { PromotionEntity } from 'src/promotion/entities/promotion.entity';
 
 @Entity({ name: 'products' })
 export class ProductEntity {
@@ -47,6 +48,9 @@ export class ProductEntity {
     cascade: true,
   })
   productAttributes: ProductAttributeEntity[];
+
+  @ManyToOne(() => PromotionEntity, (prom) => prom.products, { cascade: true })
+  promotion: PromotionEntity;
 
   @ManyToOne(() => StoreEntity, (store) => store.products)
   store: StoreEntity;

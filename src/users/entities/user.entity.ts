@@ -5,7 +5,7 @@ import {
   CreateDateColumn,
   Entity,
   JoinColumn,
-  OneToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   Timestamp,
   UpdateDateColumn,
@@ -49,14 +49,15 @@ export class UserEntity {
   })
   status: Status;
 
-  @OneToOne(() => StoreEntity, (store) => store.user, {
+  @OneToMany(() => StoreEntity, (store) => store.user, {
     nullable: true,
   })
   @JoinColumn({ name: 'storeId' })
-  store: StoreEntity;
+  store: StoreEntity[];
 
   @Column({ type: 'uuid', nullable: true })
   emailVerificationToken: string | null;
+  user: StoreEntity;
 
   // @Column({ default: false })
   // emailVerified: boolean;

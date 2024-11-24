@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsPositive, IsString, Max } from 'class-validator';
+import { IsNotEmpty, IsPositive, IsString, Length, Max } from 'class-validator';
 
 export class CreatePromotionDto {
   @IsNotEmpty({ message: 'Product Id is not empty' })
@@ -7,6 +7,11 @@ export class CreatePromotionDto {
   @IsNotEmpty({ message: 'Promotion Name is not empty' })
   @IsString()
   name: string;
+
+  @IsNotEmpty({ message: 'Key not be empty' })
+  @Length(10)
+  @IsString()
+  key: string;
 
   @IsNotEmpty({ message: 'Promotion percentage is not empty' })
   @IsPositive({ message: 'Percentage can not be negative' })

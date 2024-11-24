@@ -1,22 +1,19 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ProductsService } from 'src/products/products.service';
 import { StoreEntity } from 'src/users/entities/store.entity';
+import { checkText } from 'src/utils/common/CheckText';
 import { Repository } from 'typeorm';
 import { CreatePromotionDto } from './dto/create-promotion.dto';
 import { UpdatePromotionDto } from './dto/update-promotion.dto';
 import { PromotionEntity } from './entities/promotion.entity';
-import { ProductAttributeEntity } from 'src/products/entities/product-attribute.entity';
-import { checkText } from 'src/utils/common/CheckText';
-import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class PromotionService {
   constructor(
     @InjectRepository(PromotionEntity)
     private readonly promotionRepository: Repository<PromotionEntity>,
-    @InjectRepository(ProductAttributeEntity)
-    private readonly productAttributeRepository: Repository<ProductAttributeEntity>,
     private readonly productsService: ProductsService,
   ) {}
 
@@ -33,10 +30,20 @@ export class PromotionService {
         'The promotion contains special characters',
       );
     }
+    const checkPromotion = await this.promotionRepository.findOne({
+      where: {
+        key: createPromotionDto.key,
+        store: { id: currentStore.id },
+      },
+    });
+    if (checkPromotion) {
+      throw new BadRequestException('Promotion exists');
+    }
     let promotion;
     for (let i = 0; i < createPromotionDto.product_id.length; i++) {
       const product = await this.productsService.findOneProductAttribute(
         createPromotionDto.product_id[i],
+        currentStore,
       );
       if (product.promotion === null) {
         promotion = await this.promotionRepository.create(createPromotionDto);
@@ -105,6 +112,15 @@ export class PromotionService {
     fields: Partial<UpdatePromotionDto>,
     currentStore: StoreEntity,
   ): Promise<PromotionEntity> {
+    const checkPromotion = await this.promotionRepository.findOne({
+      where: {
+        key: fields.key,
+        store: { id: currentStore.id },
+      },
+    });
+    if (checkPromotion) {
+      throw new BadRequestException('Promotion exists');
+    }
     const promotion = await this.findOne(id, currentStore);
 
     Object.assign(promotion, fields);
@@ -116,30 +132,36 @@ export class PromotionService {
   }
 
   async checkTimePromotion(id: string) {
-    const promotion = await this.productAttributeRepository.find({
-      where: { promotion: { id: id } },
-      relations: {
-        promotion: true,
-        product: true,
-      },
+    const promotions = await this.promotionRepository.find({
+      where: { id: id },
     });
-    if (!promotion) {
+    if (!promotions) {
       throw new BadRequestException('Promotion not found');
     } else {
       const now = new Date();
-      promotion.map(async (item) => {
-        const start = new Date(item.promotion.startDay);
-        const end = new Date(item.promotion.endDay);
+      promotions.map(async (item) => {
+        const start = new Date(item.startDay);
+        const end = new Date(item.endDay);
         if (now > end) {
-          await this.productsService.updatePromotion(item.id);
+          await this.productsService.removePromotionProducts(item.id);
           return [];
         }
         if (now < start) {
           throw new BadRequestException('Promotion not start yet');
         }
       });
-      return { data: promotion };
+      return { data: promotions };
     }
+  }
+
+  async remove(id: string) {
+    const promotion = await this.promotionRepository.findOneBy({ id });
+    if (!promotion) {
+      throw new Error(`Promotion không tồn tại`);
+    }
+    await this.productsService.removePromotionProducts(promotion.id);
+
+    return await this.promotionRepository.delete(id);
   }
 
   @Cron(CronExpression.EVERY_HOUR)
@@ -157,20 +179,5 @@ export class PromotionService {
         }
       }),
     );
-  }
-
-  async remove(id: string) {
-    const promotion = await this.promotionRepository.findOneBy({ id });
-    if (!promotion) {
-      throw new Error(`Promotion không tồn tại`);
-    }
-    await this.productAttributeRepository
-      .createQueryBuilder()
-      .update(ProductAttributeEntity)
-      .set({ promotion: null })
-      .where('promotionId = :id', { id })
-      .execute();
-
-    return await this.promotionRepository.delete(id);
   }
 }

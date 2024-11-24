@@ -21,7 +21,6 @@ import { UserEntity } from './entities/user.entity';
 import { UsersService } from './users.service';
 import { Status } from 'src/utils/enums/user-status.enum';
 import { UpdateStoreStatus } from './dto/update.store.dto';
-import { TypeCurrent } from 'src/utils/middlewares/current-user.middleware';
 import { CreateUserDto } from './dto/create-user.dto';
 
 @Controller('users')
@@ -69,7 +68,7 @@ export class UsersController {
 
   // @UseGuards(AuthenticationGuard)
   // @Get('profile')
-  // async profile(@CurrentUser() currentAdmin: AdminEntity) {
+  // async profile(@CurrentUser() currentAdmin: UserEntity) {
   //   const profile = await this.usersService.profile(currentAdmin);
 
   //   return profile;
@@ -79,16 +78,16 @@ export class UsersController {
   @Post('moderator')
   async createModerator(
     @Body() createUserStoreDto: CreateUserStoreDto,
-    @CurrentUser() currentUser: UserEntity,
+    @CurrentUser() currentAdmin: UserEntity,
   ) {
     return await this.usersService.createModerator(
       createUserStoreDto,
-      currentUser,
+      currentAdmin,
     );
   }
 
   @Get('moderator')
-  async getAllModerator(@CurrentUser() currentAdmin: TypeCurrent) {
+  async getAllModerator(@CurrentUser() currentAdmin: UserEntity) {
     return await this.usersService.getAllModerator(currentAdmin);
   }
 
@@ -96,7 +95,7 @@ export class UsersController {
   async updateStatusStore(
     @Param('id') id: string,
     @Body() updateStatusStore: UpdateStoreStatus,
-    @CurrentUser() currentAdmin: TypeCurrent,
+    @CurrentUser() currentAdmin: UserEntity,
   ) {
     return await this.usersService.updateStatusStore(
       id,
@@ -107,7 +106,7 @@ export class UsersController {
 
   @Get('moderator/paginate')
   async getModeratorPaginate(
-    @CurrentUser() currentAdmin: TypeCurrent,
+    @CurrentUser() currentAdmin: UserEntity,
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 10,
   ) {
