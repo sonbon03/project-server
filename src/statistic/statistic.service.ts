@@ -66,7 +66,16 @@ export class StatisticService {
     );
   }
 
-  async getStatisticsAllStoreByYear(date: Date, currentUser: UserEntity) {
+  async getStatisticsAllStoreByYear(
+    date: Date,
+    currentUser: UserEntity,
+  ): Promise<
+    {
+      idStore: string;
+      name: string;
+      statistics: StatisticResponseDto;
+    }[]
+  > {
     const year = date.getFullYear();
     const startOfYear = new Date(year, 0, 1);
     const endOfYear = new Date(year, 11, 31, 23, 59, 59, 999);
@@ -77,7 +86,13 @@ export class StatisticService {
   async getStatisticsAllStoreByWeek(
     date: Date,
     currentUser: UserEntity,
-  ): Promise<StatisticResponseDto[]> {
+  ): Promise<
+    {
+      idStore: string;
+      name: string;
+      statistics: StatisticResponseDto;
+    }[]
+  > {
     const startOfWeek = new Date(date);
     startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
     startOfWeek.setHours(0, 0, 0, 0);
@@ -92,7 +107,13 @@ export class StatisticService {
   async getStatisticsAllStoreByMonth(
     date: Date,
     currentUser: UserEntity,
-  ): Promise<StatisticResponseDto[]> {
+  ): Promise<
+    {
+      idStore: string;
+      name: string;
+      statistics: StatisticResponseDto;
+    }[]
+  > {
     const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
     const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
     endOfMonth.setHours(23, 59, 59, 999);
@@ -108,8 +129,19 @@ export class StatisticService {
     startDate: Date,
     endDate: Date,
     currentUser: UserEntity,
-  ): Promise<StatisticResponseDto[]> {
+  ): Promise<
+    {
+      idStore: string;
+      name: string;
+      statistics: StatisticResponseDto;
+    }[]
+  > {
     const stores = await this.usersService.getAllStore(currentUser);
+    const listStatisticsStores: {
+      idStore: string;
+      name: string;
+      statistics: StatisticResponseDto;
+    }[] = [];
     for (const store of stores) {
       const statistics = await this.statisticRepository.find({
         where: {
@@ -123,17 +155,24 @@ export class StatisticService {
         return [];
       }
 
-      return statistics.map((statistic) => ({
-        id: statistic.id,
-        totalProducts: statistic.totalProducts,
-        totalRevenue: statistic.totalRevenue,
-        totalDiscount: statistic.totalDiscount,
-        totalOrders: statistic.totalOrders,
-        startDate: statistic.startDate,
-        endDate: statistic.endDate,
-        store: statistic.store,
-      }));
+      statistics.forEach((statistic) => {
+        listStatisticsStores.push({
+          idStore: store.id,
+          name: store.name,
+          statistics: {
+            id: statistic.id,
+            totalProducts: statistic.totalProducts,
+            totalRevenue: statistic.totalRevenue,
+            totalDiscount: statistic.totalDiscount,
+            totalOrders: statistic.totalOrders,
+            startDate: statistic.startDate,
+            endDate: statistic.endDate,
+            store: statistic.store,
+          },
+        });
+      });
     }
+    return listStatisticsStores;
   }
 
   private async getStatisticsByDateRange(

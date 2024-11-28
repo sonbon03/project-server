@@ -19,7 +19,13 @@ export class StatisticController {
   async getStatisticsAllStoreByMonth(
     @Query('date') date: string,
     @CurrentUser() currentUser: UserEntity,
-  ): Promise<StatisticResponseDto[]> {
+  ): Promise<
+    {
+      idStore: string;
+      name: string;
+      statistics: StatisticResponseDto;
+    }[]
+  > {
     return await this.statisticService.getStatisticsAllStoreByMonth(
       new Date(date),
       currentUser,
@@ -30,7 +36,13 @@ export class StatisticController {
   async getStatisticsAllStoreByWeek(
     @Query('date') date: string,
     @CurrentUser() currentUser: UserEntity,
-  ): Promise<StatisticResponseDto[]> {
+  ): Promise<
+    {
+      idStore: string;
+      name: string;
+      statistics: StatisticResponseDto;
+    }[]
+  > {
     return await this.statisticService.getStatisticsAllStoreByWeek(
       new Date(date),
       currentUser,
@@ -41,7 +53,13 @@ export class StatisticController {
   async getStatisticsAllStoreByYear(
     @Query('date') date: string,
     @CurrentUser() currentUser: UserEntity,
-  ): Promise<StatisticResponseDto[]> {
+  ): Promise<
+    {
+      idStore: string;
+      name: string;
+      statistics: StatisticResponseDto;
+    }[]
+  > {
     return await this.statisticService.getStatisticsAllStoreByYear(
       new Date(date),
       currentUser,
