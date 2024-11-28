@@ -37,20 +37,7 @@ export class UsersService {
     }
     userCreateDto.password = await hash(userCreateDto.password, 10);
 
-    const createAdmin = {
-      phone: userCreateDto.phone,
-      name: userCreateDto.name,
-    };
-
-    const admin = await this.usersRepository.create(createAdmin);
-    await this.usersRepository.save(admin);
-
-    const createUser = {
-      email: userCreateDto.email,
-      password: userCreateDto.password,
-      admin,
-    };
-    let user = await this.usersRepository.create(createUser);
+    let user = await this.usersRepository.create(userCreateDto);
     const emailVerificationToken = uuidv4();
     user.emailVerificationToken = emailVerificationToken;
 
@@ -196,8 +183,11 @@ export class UsersService {
     });
   }
 
-  async getStore(idStore: string): Promise<any> {
-    const store = await this.storesRepository.find({ where: { id: idStore } });
+  async getStore(idStore: string, currentUser: UserEntity): Promise<any> {
+    const store = await this.storesRepository.findOneBy({
+      id: idStore,
+      user: { id: currentUser.id },
+    });
     if (!store) throw new BadRequestException('Store not found!');
     return store;
   }

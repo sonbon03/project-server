@@ -15,6 +15,7 @@ import { OrdersModule } from './orders/orders.module';
 import { VouchersModule } from './vouchers/vouchers.module';
 import { MailService } from './mail/mail.service';
 import { StatisticModule } from './statistic/statistic.module';
+import { NotificationModule } from './notification/notification.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { StatisticModule } from './statistic/statistic.module';
     OrdersModule,
     VouchersModule,
     StatisticModule,
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [AppService, MailService],

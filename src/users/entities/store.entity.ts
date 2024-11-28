@@ -15,6 +15,7 @@ import {
 } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { UserEntity } from './user.entity';
+import { NotificationEntity } from 'src/notification/entities/notification.entity';
 
 @Entity('stores')
 export class StoreEntity {
@@ -53,4 +54,7 @@ export class StoreEntity {
 
   @OneToMany(() => StatisticEntity, (statis) => statis.store)
   statistics: StatisticEntity[];
+
+  @OneToMany(() => NotificationEntity, (noti) => noti.store)
+  notify: NotificationEntity[];
 }

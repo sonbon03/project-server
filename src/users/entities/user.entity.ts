@@ -12,6 +12,7 @@ import {
 } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { StoreEntity } from './store.entity';
+import { PoolEntity } from 'src/notification/entities/pool.entity';
 
 @Entity('users')
 export class UserEntity {
@@ -59,6 +60,6 @@ export class UserEntity {
   emailVerificationToken: string | null;
   user: StoreEntity;
 
-  // @Column({ default: false })
-  // emailVerified: boolean;
+  @OneToMany(() => PoolEntity, (pool) => pool.user)
+  pools: PoolEntity[];
 }
