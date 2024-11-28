@@ -192,6 +192,14 @@ export class UsersService {
     return store;
   }
 
+  async getAllStore(currentUser: UserEntity): Promise<any> {
+    const stores = await this.usersRepository.find({
+      where: { id: currentUser.id },
+    });
+    if (!stores) throw new BadRequestException('Store not found!');
+    return stores;
+  }
+
   async accessToken(user: UserEntity) {
     return sign(
       {
