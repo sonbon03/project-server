@@ -1,20 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateProductDto {
   @ApiProperty({})
   @IsNotEmpty({ message: 'Name not be empty' })
   @IsString()
   name: string;
-
-  @ApiProperty({})
-  @IsNotEmpty({ message: 'Expiry day not be empty' })
-  expiryDay: Date;
-
-  @ApiProperty({})
-  // @IsNotEmpty({ message: 'Nanufacture day not be empty' })
-  @IsOptional()
-  manufactureDate?: Date;
 
   @ApiProperty({})
   @IsNotEmpty({ message: 'Measure not be empty' })

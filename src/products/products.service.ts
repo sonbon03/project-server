@@ -6,7 +6,6 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { CategoriesService } from 'src/categories/categories.service';
 import { PromotionEntity } from 'src/promotion/entities/promotion.entity';
-import { StoreEntity } from 'src/users/entities/store.entity';
 import {
   StatusAttibute,
   StatusPayment,
@@ -19,6 +18,7 @@ import { UpdateProductAttributeDto } from './dto/update-product-attribute.dto';
 import { AttributeEntity } from './entities/attribute.entity';
 import { ProductAttributeEntity } from './entities/product-attribute.entity';
 import { ProductEntity } from './entities/product.entity';
+import { StoreEntity } from 'src/store/entities/store.entity';
 
 @Injectable()
 export class ProductsService {
@@ -55,9 +55,10 @@ export class ProductsService {
     if (!warehouse) {
       throw new NotFoundException('Warehouses not found');
     }
-    productEntity.name = createProductAttributeDto.product.name.toLowerCase();
+    productEntity.name = createProductAttributeDto.product.name;
     productEntity.category = category;
     productEntity.warehouse = warehouse;
+    productEntity.importDay = new Date();
     productEntity.store = currentStore;
 
     const productTbl = await this.productRepository.save(productEntity);

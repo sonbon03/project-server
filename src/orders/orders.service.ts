@@ -1,34 +1,22 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EmployeesService } from 'src/employees/employees.service';
 import { ProductsService } from 'src/products/products.service';
-import { StoreEntity } from 'src/users/entities/store.entity';
+import { StoreEntity } from 'src/store/entities/store.entity';
+import { StoreService } from 'src/store/store.service';
+import { PaymentMethod } from 'src/utils/enums/payment-method.enum';
 import {
   StatusAttibute,
   StatusPayment,
 } from 'src/utils/enums/user-status.enum';
+import { VoucherEnity } from 'src/vouchers/entities/voucher.entity';
+import { VouchersService } from 'src/vouchers/vouchers.service';
 import { Repository } from 'typeorm';
+import { UsersService } from '../users/users.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdatePaymentStatusDto } from './dto/update-payment-status.dto';
 import { OrderProductEntity } from './entities/order-product.entity';
 import { OrderEntity } from './entities/order.entity';
 import { PaymentEntity } from './entities/payment.entity';
-import { PaymentMethod } from 'src/utils/enums/payment-method.enum';
-import { VouchersService } from 'src/vouchers/vouchers.service';
-import { VoucherEnity } from 'src/vouchers/entities/voucher.entity';
-import { checkText } from 'src/utils/common/CheckText';
-import * as XLSX from 'xlsx';
-import { Response } from 'express';
-import {
-  Document,
-  Packer,
-  Paragraph,
-  TextRun,
-  Table,
-  TableCell,
-  TableRow,
-  WidthType,
-} from 'docx';
 
 @Injectable()
 export class OrdersService {
@@ -38,8 +26,9 @@ export class OrdersService {
     @InjectRepository(OrderEntity)
     private readonly orderRepository: Repository<OrderEntity>,
     private readonly productsService: ProductsService,
-    private readonly employeesService: EmployeesService,
     private readonly vouchersService: VouchersService,
+    private readonly storeService: StoreService,
+    private readonly usersService: UsersService,
   ) {}
 
   async create(createOrderDto: CreateOrderDto, currentStore: StoreEntity) {
@@ -48,9 +37,6 @@ export class OrdersService {
         createOrderDto.products[i].id_attribute,
         createOrderDto.products[i].id_product,
       );
-      if (checkText(productAttribute.attribute.key)) {
-        throw new BadRequestException('The name contains special characters');
-      }
       if (productAttribute.product.promotion) {
         const price =
           productAttribute.attribute.price *
@@ -97,17 +83,16 @@ export class OrdersService {
 
     const order = new OrderEntity();
     order.payment = payment;
-    order.store = currentStore;
     order.moneyDiscount = voucher?.money ? voucher.money : 0;
 
     if (createOrderDto.id_user) {
-      const employee = await this.employeesService.findOneCustomer(
+      const customer = await this.storeService.findOneCustomer(
         createOrderDto.id_user,
         currentStore,
       );
-      order.employee = employee;
+      order.store_customer = customer;
     } else {
-      order.employee = null;
+      order.store_customer = null;
     }
 
     order.quantityProduct = totalQuantity;
@@ -152,7 +137,7 @@ export class OrdersService {
     }
 
     if (createOrderDto.id_user) {
-      await this.employeesService.updatePoint(point, createOrderDto.id_user);
+      await this.storeService.updatePoint(point, createOrderDto.id_user);
     }
 
     await this.orderProductRepository
@@ -339,7 +324,7 @@ export class OrdersService {
 
   async findAll(currentStore: StoreEntity) {
     const order = this.orderRepository.find({
-      where: { store: { id: currentStore.id } },
+      where: { store_customer: { storeId: currentStore.id } },
       relations: {
         orderProducts: {
           productAttribute: true,
@@ -359,7 +344,11 @@ export class OrdersService {
     const take = limit;
 
     const [result, total] = await this.orderRepository.findAndCount({
-      where: { store: { id: currentStore.id } },
+      where: {
+        store_customer: {
+          storeId: currentStore.id,
+        },
+      },
       relations: {
         payment: true,
         // store: true,
@@ -384,10 +373,13 @@ export class OrdersService {
 
   async findOne(id: string, currentStore: StoreEntity) {
     const order = await this.orderRepository.findOne({
-      where: { id: id, store: { id: currentStore.id } },
+      where: { id: id, store_customer: { storeId: currentStore.id } },
       relations: {
         payment: true,
-        store: true,
+        store_customer: {
+          user: true,
+          store: true,
+        },
         orderProducts: {
           productAttribute: {
             attribute: true,
@@ -437,165 +429,165 @@ export class OrdersService {
     }
   }
 
-  async exportDataOrder(
-    res: Response,
-    currentStore: StoreEntity,
-  ): Promise<void> {
-    const orders = await this.orderRepository.find({
-      where: {
-        store: { id: currentStore.id },
-      },
-      relations: {
-        employee: true,
-        payment: true,
-      },
-    });
-    const data = orders.map((order, index: number) => ({
-      id: index + 1,
-      quantity_product: order.quantityProduct,
-      total_price: order.total,
-      money_discount: order.moneyDiscount,
-      time_buy: order.timeBuy,
-      employee: order.employee
-        ? order.employee.firstName + ' ' + order.employee.lastName
-        : '',
-      payment_method: order.payment.paymentMethod,
-      payment_date: order.payment.paymentDate,
-    }));
+  // async exportDataOrder(
+  //   res: Response,
+  //   currentStore: StoreEntity,
+  // ): Promise<void> {
+  //   const orders = await this.orderRepository.find({
+  //     where: {
+  //       store: { id: currentStore.id },
+  //     },
+  //     relations: {
+  //       employee: true,
+  //       payment: true,
+  //     },
+  //   });
+  //   const data = orders.map((order, index: number) => ({
+  //     id: index + 1,
+  //     quantity_product: order.quantityProduct,
+  //     total_price: order.total,
+  //     money_discount: order.moneyDiscount,
+  //     time_buy: order.timeBuy,
+  //     employee: order.employee
+  //       ? order.employee.firstName + ' ' + order.employee.lastName
+  //       : '',
+  //     payment_method: order.payment.paymentMethod,
+  //     payment_date: order.payment.paymentDate,
+  //   }));
 
-    const worksheet = XLSX.utils.json_to_sheet(data);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Orders');
-    // Ghi file Excel vào buffer
-    const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+  //   const worksheet = XLSX.utils.json_to_sheet(data);
+  //   const workbook = XLSX.utils.book_new();
+  //   XLSX.utils.book_append_sheet(workbook, worksheet, 'Orders');
+  //   // Ghi file Excel vào buffer
+  //   const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
 
-    // Thiết lập header để tải file Excel
-    res.setHeader('Content-Disposition', 'attachment; filename=orders.xlsx');
-    res.setHeader(
-      'Content-Type',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    );
+  //   // Thiết lập header để tải file Excel
+  //   res.setHeader('Content-Disposition', 'attachment; filename=orders.xlsx');
+  //   res.setHeader(
+  //     'Content-Type',
+  //     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  //   );
 
-    // Gửi file Excel về phía client
-    res.send(buffer);
-  }
+  //   // Gửi file Excel về phía client
+  //   res.send(buffer);
+  // }
 
-  async exportDocxOrder(
-    res: Response,
-    currentStore: StoreEntity,
-  ): Promise<any> {
-    const orders = await this.orderRepository.find({
-      where: {
-        store: {
-          id: currentStore.id,
-        },
-      },
-      relations: {
-        employee: true,
-        payment: true,
-      },
-    });
+  // async exportDocxOrder(
+  //   res: Response,
+  //   currentStore: StoreEntity,
+  // ): Promise<any> {
+  //   const orders = await this.orderRepository.find({
+  //     where: {
+  //       store: {
+  //         id: currentStore.id,
+  //       },
+  //     },
+  //     relations: {
+  //       employee: true,
+  //       payment: true,
+  //     },
+  //   });
 
-    const row = orders.map((order, index: number) => {
-      return new TableRow({
-        children: [
-          new TableCell({
-            children: [new Paragraph(index.toString())],
-          }),
-          new TableCell({
-            children: [
-              new Paragraph(
-                order.employee
-                  ? order.employee.firstName + ' ' + order.employee.lastName
-                  : ' ',
-              ),
-            ],
-          }),
-          new TableCell({
-            children: [new Paragraph(order.quantityProduct.toString())],
-          }),
-          new TableCell({
-            children: [new Paragraph(order.total.toString())],
-          }),
-          new TableCell({
-            children: [new Paragraph(order.moneyDiscount.toString())],
-          }),
-          new TableCell({
-            children: [new Paragraph(order.timeBuy.toISOString())],
-          }),
-          new TableCell({
-            children: [new Paragraph(order.payment.paymentDate.toISOString())],
-          }),
-          new TableCell({
-            children: [new Paragraph(order.payment.paymentMethod)],
-          }),
-        ],
-      });
-    });
+  //   const row = orders.map((order, index: number) => {
+  //     return new TableRow({
+  //       children: [
+  //         new TableCell({
+  //           children: [new Paragraph(index.toString())],
+  //         }),
+  //         new TableCell({
+  //           children: [
+  //             new Paragraph(
+  //               order.employee
+  //                 ? order.employee.firstName + ' ' + order.employee.lastName
+  //                 : ' ',
+  //             ),
+  //           ],
+  //         }),
+  //         new TableCell({
+  //           children: [new Paragraph(order.quantityProduct.toString())],
+  //         }),
+  //         new TableCell({
+  //           children: [new Paragraph(order.total.toString())],
+  //         }),
+  //         new TableCell({
+  //           children: [new Paragraph(order.moneyDiscount.toString())],
+  //         }),
+  //         new TableCell({
+  //           children: [new Paragraph(order.timeBuy.toISOString())],
+  //         }),
+  //         new TableCell({
+  //           children: [new Paragraph(order.payment.paymentDate.toISOString())],
+  //         }),
+  //         new TableCell({
+  //           children: [new Paragraph(order.payment.paymentMethod)],
+  //         }),
+  //       ],
+  //     });
+  //   });
 
-    const table = new Table({
-      width: { size: 100, type: WidthType.PERCENTAGE },
-      rows: [
-        new TableRow({
-          children: [
-            new TableCell({
-              children: [new Paragraph('STT')],
-            }),
-            new TableCell({
-              children: [new Paragraph('Name')],
-            }),
-            new TableCell({
-              children: [new Paragraph('Quantity')],
-            }),
-            new TableCell({
-              children: [new Paragraph('Total')],
-            }),
-            new TableCell({
-              children: [new Paragraph('Discount')],
-            }),
-            new TableCell({
-              children: [new Paragraph('Date Bought')],
-            }),
-            new TableCell({
-              children: [new Paragraph('Date Payment')],
-            }),
-            new TableCell({
-              children: [new Paragraph('Method Payment')],
-            }),
-          ],
-        }),
-        ...row,
-      ],
-    });
+  //   const table = new Table({
+  //     width: { size: 100, type: WidthType.PERCENTAGE },
+  //     rows: [
+  //       new TableRow({
+  //         children: [
+  //           new TableCell({
+  //             children: [new Paragraph('STT')],
+  //           }),
+  //           new TableCell({
+  //             children: [new Paragraph('Name')],
+  //           }),
+  //           new TableCell({
+  //             children: [new Paragraph('Quantity')],
+  //           }),
+  //           new TableCell({
+  //             children: [new Paragraph('Total')],
+  //           }),
+  //           new TableCell({
+  //             children: [new Paragraph('Discount')],
+  //           }),
+  //           new TableCell({
+  //             children: [new Paragraph('Date Bought')],
+  //           }),
+  //           new TableCell({
+  //             children: [new Paragraph('Date Payment')],
+  //           }),
+  //           new TableCell({
+  //             children: [new Paragraph('Method Payment')],
+  //           }),
+  //         ],
+  //       }),
+  //       ...row,
+  //     ],
+  //   });
 
-    const docx = new Document({
-      sections: [
-        {
-          properties: {},
-          children: [
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: 'Order Report',
-                  bold: true,
-                  size: 20,
-                }),
-              ],
-              heading: 'Heading1',
-            }),
-            table,
-          ],
-        },
-      ],
-    });
+  //   const docx = new Document({
+  //     sections: [
+  //       {
+  //         properties: {},
+  //         children: [
+  //           new Paragraph({
+  //             children: [
+  //               new TextRun({
+  //                 text: 'Order Report',
+  //                 bold: true,
+  //                 size: 20,
+  //               }),
+  //             ],
+  //             heading: 'Heading1',
+  //           }),
+  //           table,
+  //         ],
+  //       },
+  //     ],
+  //   });
 
-    const buffer = await Packer.toBuffer(docx);
+  //   const buffer = await Packer.toBuffer(docx);
 
-    res.setHeader('Content-Disposition', 'attachment; filename=orders.docx');
-    res.setHeader(
-      'Content-Type',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    );
-    res.send(buffer);
-  }
+  //   res.setHeader('Content-Disposition', 'attachment; filename=orders.docx');
+  //   res.setHeader(
+  //     'Content-Type',
+  //     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  //   );
+  //   res.send(buffer);
+  // }
 }

@@ -4,8 +4,8 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CategoryEntity } from './entities/category.entity';
 import { Repository } from 'typeorm';
-import { StoreEntity } from 'src/users/entities/store.entity';
 import { checkText } from 'src/utils/common/CheckText';
+import { StoreEntity } from 'src/store/entities/store.entity';
 
 @Injectable()
 export class CategoriesService {

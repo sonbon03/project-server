@@ -33,6 +33,12 @@ export class AttributeEntity {
   @Column()
   amount: number;
 
+  @Column()
+  expiryDay: Date;
+
+  @Column({ type: 'date', nullable: true })
+  manufactureDate: Date | null;
+
   @Check('"price" > 0')
   @Column({ type: 'decimal', precision: 10, scale: 3 })
   price: number;

@@ -12,8 +12,8 @@ import {
 } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { ProductAttributeEntity } from './product-attribute.entity';
-import { StoreEntity } from 'src/users/entities/store.entity';
 import { PromotionEntity } from 'src/promotion/entities/promotion.entity';
+import { StoreEntity } from 'src/store/entities/store.entity';
 
 @Entity({ name: 'products' })
 export class ProductEntity {
@@ -24,10 +24,7 @@ export class ProductEntity {
   name: string;
 
   @Column()
-  expiryDay: Date;
-
-  @Column({ type: 'date', nullable: true })
-  manufactureDate: Date | null;
+  importDay: Date;
 
   @Column()
   measure: string;

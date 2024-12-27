@@ -1,21 +1,21 @@
 import { CategoryEntity } from 'src/categories/entities/category.entity';
-import { EmployeeEntity } from 'src/employees/entities/employee.entity';
-import { OrderEntity } from 'src/orders/entities/order.entity';
+import { NotificationEntity } from 'src/notification/entities/notification.entity';
 import { ProductEntity } from 'src/products/entities/product.entity';
 import { PromotionEntity } from 'src/promotion/entities/promotion.entity';
 import { StatisticEntity } from 'src/statistic/entities/statistic.entity';
+import { UserStoreEntity } from 'src/users/entities/user-store.entity';
 import { VoucherEnity } from 'src/vouchers/entities/voucher.entity';
 import { WarehouseEntity } from 'src/warehouses/entities/warehouse.entity';
 import {
   Column,
+  CreateDateColumn,
   Entity,
-  ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
+  Timestamp,
+  UpdateDateColumn,
 } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
-import { UserEntity } from './user.entity';
-import { NotificationEntity } from 'src/notification/entities/notification.entity';
 
 @Entity('stores')
 export class StoreEntity {
@@ -28,11 +28,11 @@ export class StoreEntity {
   @Column()
   address: string;
 
-  @ManyToOne(() => UserEntity, (user) => user.store, { cascade: true })
-  user: UserEntity;
+  @CreateDateColumn()
+  createdAt: Timestamp;
 
-  @OneToMany(() => EmployeeEntity, (emp) => emp.store)
-  employees: EmployeeEntity[];
+  @UpdateDateColumn()
+  updatedAt: Timestamp;
 
   @OneToMany(() => WarehouseEntity, (ware) => ware.store)
   warehouse: WarehouseEntity[];
@@ -46,9 +46,6 @@ export class StoreEntity {
   @OneToMany(() => PromotionEntity, (prom) => prom.store)
   promotions: PromotionEntity[];
 
-  @OneToMany(() => OrderEntity, (order) => order.store)
-  orders: OrderEntity[];
-
   @OneToMany(() => VoucherEnity, (vou) => vou.store)
   vouchers: VoucherEnity[];
 
@@ -57,4 +54,9 @@ export class StoreEntity {
 
   @OneToMany(() => NotificationEntity, (noti) => noti.store)
   notify: NotificationEntity[];
+
+  @OneToMany(() => UserStoreEntity, (userStore) => userStore.store, {
+    onDelete: 'CASCADE',
+  })
+  user_store: UserStoreEntity[];
 }

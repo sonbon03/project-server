@@ -1,5 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsString, Length, Min } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Length,
+  Min,
+} from 'class-validator';
 import { StatusAttibute } from 'src/utils/enums/user-status.enum';
 
 export class CreateAttributeDto {
@@ -24,6 +31,15 @@ export class CreateAttributeDto {
   @IsNumber()
   @Min(1)
   amount: number;
+
+  @ApiProperty({})
+  @IsNotEmpty({ message: 'Expiry day not be empty' })
+  expiryDay: Date;
+
+  @ApiProperty({})
+  @IsNotEmpty({ message: 'Manufacture day not be empty' })
+  @IsOptional()
+  manufactureDate: Date;
 
   status: StatusAttibute;
 

@@ -1,5 +1,3 @@
-import { EmployeeEntity } from 'src/employees/entities/employee.entity';
-import { StoreEntity } from 'src/users/entities/store.entity';
 import {
   Column,
   CreateDateColumn,
@@ -15,6 +13,7 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { OrderProductEntity } from './order-product.entity';
 import { PaymentEntity } from './payment.entity';
+import { StoreCustomerEntity } from 'src/store/entities/store-customer.entity';
 
 @Entity({ name: 'orders' })
 export class OrderEntity {
@@ -27,23 +26,25 @@ export class OrderEntity {
   @Column()
   timeBuy: Date;
 
+  @Column()
+  name: string;
+
   @Column({ type: 'decimal', precision: 10, scale: 3 })
   total: number;
 
   @Column({ type: 'decimal', precision: 10, scale: 3 })
   moneyDiscount: number;
 
-  @ManyToOne(() => StoreEntity, (store) => store.orders)
-  store: StoreEntity;
+  @ManyToOne(() => StoreCustomerEntity, (store) => store.orders, {
+    onDelete: 'CASCADE',
+  })
+  store_customer: StoreCustomerEntity;
 
   @CreateDateColumn()
   createdAt: Timestamp;
 
   @UpdateDateColumn()
   updatedAt: Timestamp;
-
-  @ManyToOne(() => EmployeeEntity, (emp) => emp.orders)
-  employee: EmployeeEntity;
 
   @OneToMany(() => OrderProductEntity, (orProd) => orProd.order)
   orderProducts: OrderProductEntity[];

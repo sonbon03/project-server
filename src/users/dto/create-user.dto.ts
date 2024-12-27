@@ -1,26 +1,26 @@
-import { PrimaryGeneratedColumn } from 'typeorm';
-import { v4 as uuidv4 } from 'uuid';
-import { SignInDto } from './signin.dto';
-import { IsNotEmpty, IsOptional, IsString, Length } from 'class-validator';
-import { Roles } from 'src/utils/enums/user-roles.enum';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { Gender } from 'src/utils/enums/user-gender.enum';
+import { Index } from 'typeorm';
 
-export class CreateUserDto extends SignInDto {
+export class CreateUserDto {
   @ApiProperty({})
-  @PrimaryGeneratedColumn('uuid')
-  id: string = uuidv4();
-
-  @ApiProperty({})
-  @IsNotEmpty({ message: 'Name not empty' })
-  @IsString()
-  name: string;
-
-  @ApiProperty({})
-  @IsNotEmpty({ message: 'Phone number not empty' })
-  @Length(10, 10, { message: 'Phone number must 10 character' })
-  @IsString()
   @IsOptional()
+  @IsString()
+  last_name: string;
+
+  @ApiProperty({})
+  @IsNotEmpty({ message: 'First name not empty' })
+  @IsString()
+  first_name: string;
+
+  @Index()
+  @ApiProperty({})
+  @IsNotEmpty({ message: 'Phone not empty' })
+  @IsString()
   phone: string;
 
-  role: Roles;
+  @ApiProperty({})
+  @IsNotEmpty({ message: 'Gender not empty' })
+  gender: Gender;
 }

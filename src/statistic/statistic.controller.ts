@@ -2,12 +2,12 @@ import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { StatisticService } from './statistic.service';
 import { StatisticResponseDto } from './dto/statistic-response.dto';
 import { CurrentStore } from 'src/utils/decoratores/current-store.decoratore';
-import { StoreEntity } from 'src/users/entities/store.entity';
 import { AuthenticationGuard } from 'src/utils/guards/authentication.guard';
 import { AuthorizeGuard } from 'src/utils/guards/authorization.guard';
 import { Roles } from 'src/utils/enums/user-roles.enum';
 import { CurrentUser } from 'src/utils/decoratores/current-user.decoratore';
 import { UserEntity } from 'src/users/entities/user.entity';
+import { StoreEntity } from 'src/store/entities/store.entity';
 
 @Controller('statistic')
 @UseGuards(AuthenticationGuard)

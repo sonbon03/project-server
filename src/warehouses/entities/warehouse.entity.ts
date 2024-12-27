@@ -1,4 +1,5 @@
 import { ProductEntity } from 'src/products/entities/product.entity';
+import { StoreEntity } from 'src/store/entities/store.entity';
 import {
   Column,
   Entity,
@@ -7,7 +8,6 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
-import { StoreEntity } from '../../users/entities/store.entity';
 
 @Entity({ name: 'warehouse' })
 export class WarehouseEntity {

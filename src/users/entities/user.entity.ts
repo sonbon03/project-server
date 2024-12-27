@@ -1,18 +1,18 @@
+import { PoolEntity } from 'src/notification/entities/pool.entity';
+import { Gender } from 'src/utils/enums/user-gender.enum';
 import { Roles } from 'src/utils/enums/user-roles.enum';
 import { Status } from 'src/utils/enums/user-status.enum';
 import {
   Column,
   CreateDateColumn,
   Entity,
-  JoinColumn,
   OneToMany,
   PrimaryGeneratedColumn,
   Timestamp,
   UpdateDateColumn,
 } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
-import { StoreEntity } from './store.entity';
-import { PoolEntity } from 'src/notification/entities/pool.entity';
+import { UserStoreEntity } from './user-store.entity';
 
 @Entity('users')
 export class UserEntity {
@@ -25,41 +25,52 @@ export class UserEntity {
   @UpdateDateColumn()
   updatedAt: Timestamp;
 
-  @Column({ unique: true })
-  email: string;
+  @Column({ unique: true, nullable: true })
+  email?: string;
 
-  @Column({ select: false })
-  password: string;
+  @Column({ select: false, nullable: true })
+  password?: string;
 
   @Column({ type: 'enum', enum: Roles, default: Roles.ADMIN })
   roles: Roles;
 
-  @Column()
-  name: string;
+  @Column({ nullable: true })
+  last_name?: string;
 
-  @Column({ nullable: null })
+  @Column()
+  first_name: string;
+
+  @Column()
   phone: string;
 
-  @Column({ type: 'uuid', nullable: true })
-  storeId: string;
+  @Column({ nullable: true, default: 0 })
+  point?: string;
+
+  @Column({ nullable: true })
+  salary?: string;
+
+  @Column({ nullable: true, default: 0 })
+  quantityOrder?: number;
+
+  @Column({ nullable: true })
+  gender?: Gender;
 
   @Column({
     type: 'enum',
     enum: Status,
+    nullable: true,
     default: Status.PENDING,
   })
   status: Status;
 
-  @OneToMany(() => StoreEntity, (store) => store.user, {
-    nullable: true,
-  })
-  @JoinColumn({ name: 'storeId' })
-  store: StoreEntity[];
-
   @Column({ type: 'uuid', nullable: true })
   emailVerificationToken: string | null;
-  user: StoreEntity;
 
   @OneToMany(() => PoolEntity, (pool) => pool.user)
   pools: PoolEntity[];
+
+  @OneToMany(() => UserStoreEntity, (userStore) => userStore.user, {
+    onDelete: 'CASCADE',
+  })
+  user_store: UserStoreEntity[];
 }

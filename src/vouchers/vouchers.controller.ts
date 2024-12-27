@@ -13,10 +13,10 @@ import { VouchersService } from './vouchers.service';
 import { CreateVoucherDto } from './dto/create-voucher.dto';
 import { UpdateVoucherDto } from './dto/update-voucher.dto';
 import { CurrentStore } from 'src/utils/decoratores/current-store.decoratore';
-import { StoreEntity } from 'src/users/entities/store.entity';
 import { AuthenticationGuard } from 'src/utils/guards/authentication.guard';
 import { AuthorizeGuard } from 'src/utils/guards/authorization.guard';
 import { Roles } from 'src/utils/enums/user-roles.enum';
+import { StoreEntity } from 'src/store/entities/store.entity';
 
 @Controller('vouchers')
 @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.MODERATOR]))

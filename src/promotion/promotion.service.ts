@@ -2,12 +2,12 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ProductsService } from 'src/products/products.service';
-import { StoreEntity } from 'src/users/entities/store.entity';
 import { checkText } from 'src/utils/common/CheckText';
 import { Repository } from 'typeorm';
 import { CreatePromotionDto } from './dto/create-promotion.dto';
 import { UpdatePromotionDto } from './dto/update-promotion.dto';
 import { PromotionEntity } from './entities/promotion.entity';
+import { StoreEntity } from 'src/store/entities/store.entity';
 
 @Injectable()
 export class PromotionService {

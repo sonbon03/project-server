@@ -12,11 +12,11 @@ import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { CurrentStore } from 'src/utils/decoratores/current-store.decoratore';
-import { StoreEntity } from 'src/users/entities/store.entity';
 import { CategoryEntity } from './entities/category.entity';
 import { AuthenticationGuard } from 'src/utils/guards/authentication.guard';
 import { AuthorizeGuard } from 'src/utils/guards/authorization.guard';
 import { Roles } from 'src/utils/enums/user-roles.enum';
+import { StoreEntity } from 'src/store/entities/store.entity';
 
 @Controller('categories')
 @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.MODERATOR]))

@@ -1,4 +1,4 @@
-import { StoreEntity } from 'src/users/entities/store.entity';
+import { StoreEntity } from 'src/store/entities/store.entity';
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 
 @Entity({ name: 'statistics' })

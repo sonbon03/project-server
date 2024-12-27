@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
-import { StoreEntity } from 'src/users/entities/store.entity';
 import { Repository } from 'typeorm';
 import { CreateStatisticDto } from './dto/create-statistic.dto';
 import { StatisticResponseDto } from './dto/statistic-response.dto';
 import { StatisticEntity } from './entities/statistic.entity';
 import { UserEntity } from 'src/users/entities/user.entity';
 import { UsersService } from '../users/users.service';
+import { StoreEntity } from 'src/store/entities/store.entity';
 
 @Injectable()
 export class StatisticService {

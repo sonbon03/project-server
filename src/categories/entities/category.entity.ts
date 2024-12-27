@@ -1,5 +1,5 @@
 import { ProductEntity } from 'src/products/entities/product.entity';
-import { StoreEntity } from 'src/users/entities/store.entity';
+import { StoreEntity } from 'src/store/entities/store.entity';
 import {
   Column,
   CreateDateColumn,

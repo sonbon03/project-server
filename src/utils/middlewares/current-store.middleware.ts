@@ -2,13 +2,13 @@ import { Injectable, NestMiddleware } from '@nestjs/common';
 import { isArray } from 'class-validator';
 import { NextFunction, Request, Response } from 'express';
 import { verify } from 'jsonwebtoken';
-import { StoreEntity } from 'src/users/entities/store.entity';
+import { UserStoreEntity } from 'src/users/entities/user-store.entity';
 import { UsersService } from 'src/users/users.service';
 
 declare global {
   namespace Express {
     interface Request {
-      currentStore?: StoreEntity;
+      currentStore?: UserStoreEntity;
     }
   }
 }
@@ -32,7 +32,7 @@ export class CurrentStoreMiddleware implements NestMiddleware {
         const { id } = <JwtPayload>(
           verify(token, process.env.ACCESS_TOKEN_SECRET_KEY)
         );
-        const currentStore = await this.usersService.findOneStore(id);
+        const currentStore = await this.usersService.findOneStoreUser(id);
         req.currentStore = currentStore;
         next();
       } catch (error) {

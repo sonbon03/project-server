@@ -9,7 +9,6 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { StoreEntity } from 'src/users/entities/store.entity';
 import { CurrentStore } from 'src/utils/decoratores/current-store.decoratore';
 import { Roles } from 'src/utils/enums/user-roles.enum';
 import { AuthenticationGuard } from 'src/utils/guards/authentication.guard';
@@ -17,6 +16,7 @@ import { AuthorizeGuard } from 'src/utils/guards/authorization.guard';
 import { CreateProductAttributeDto } from './dto/create-product-attribute.dto';
 import { ProductsService } from './products.service';
 import { UpdateProductAttributeDto } from './dto/update-product-attribute.dto';
+import { StoreEntity } from 'src/store/entities/store.entity';
 
 @Controller('products')
 @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.MODERATOR]))

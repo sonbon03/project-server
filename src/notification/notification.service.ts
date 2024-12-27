@@ -6,8 +6,8 @@ import { UsersService } from '../users/users.service';
 import { CreatePoolDto } from './dto/create-pool.dto';
 import { NotificationEntity } from './entities/notification.entity';
 import { PoolEntity } from './entities/pool.entity';
-import { StoreEntity } from 'src/users/entities/store.entity';
 import { CreateNotificationDto } from './dto/create-notification.dto';
+import { StoreEntity } from 'src/store/entities/store.entity';
 
 @Injectable()
 export class NotificationService {
@@ -48,7 +48,7 @@ export class NotificationService {
 
     const pools = await this.poolRepository.find({
       where: {
-        user: { id: currentStore.user.id },
+        user: { id: currentStore.id },
         createdAt: MoreThan(time),
       },
     });

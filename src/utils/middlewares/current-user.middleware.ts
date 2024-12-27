@@ -2,17 +2,15 @@ import { Injectable, NestMiddleware } from '@nestjs/common';
 import { isArray } from 'class-validator';
 import { NextFunction, Request, Response } from 'express';
 import { verify } from 'jsonwebtoken';
-import { StoreEntity } from 'src/users/entities/store.entity';
-import { UsersService } from 'src/users/users.service';
-import { Roles } from '../enums/user-roles.enum';
 import { UserEntity } from 'src/users/entities/user.entity';
+import { UsersService } from 'src/users/users.service';
 
-export interface TypeCurrent {
-  idAdmin: string;
-  idUser: string;
-  idStore: StoreEntity;
-  roles: Roles;
-}
+// export interface TypeCurrent {
+//   idAdmin: string;
+//   idUser: string;
+//   idStore: StoreEntity;
+//   roles: Roles;
+// }
 
 declare global {
   namespace Express {

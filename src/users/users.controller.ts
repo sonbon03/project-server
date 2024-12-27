@@ -11,17 +11,19 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { UpdateStoreStatus } from 'src/store/dto/update-status-store.dto';
+import { StoreEntity } from 'src/store/entities/store.entity';
 import { CurrentUser } from 'src/utils/decoratores/current-user.decoratore';
 import { Roles } from 'src/utils/enums/user-roles.enum';
+import { Status } from 'src/utils/enums/user-status.enum';
 import { AuthenticationGuard } from 'src/utils/guards/authentication.guard';
 import { AuthorizeGuard } from 'src/utils/guards/authorization.guard';
-import { CreateUserStoreDto } from './dto/create-store-user.dto';
+import { CreateAdminDto } from './dto/create-admin.dto';
+import { CreateModeratorDto } from './dto/create-moderator.dto';
+import { CreateStaffDto } from './dto/create-staff.dto';
 import { SignInDto } from './dto/signin.dto';
 import { UserEntity } from './entities/user.entity';
 import { UsersService } from './users.service';
-import { Status } from 'src/utils/enums/user-status.enum';
-import { UpdateStoreStatus } from './dto/update.store.dto';
-import { CreateUserDto } from './dto/create-user.dto';
 
 @Controller('users')
 export class UsersController {
@@ -29,9 +31,9 @@ export class UsersController {
 
   @Post('signup')
   async signup(
-    @Body() userCreateDto: CreateUserDto,
+    @Body() adminCreateDto: CreateAdminDto,
   ): Promise<{ user: UserEntity }> {
-    return { user: await this.usersService.signup(userCreateDto) };
+    return { user: await this.usersService.signup(adminCreateDto) };
   }
 
   @Post('signin')
@@ -77,70 +79,69 @@ export class UsersController {
   @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Post('moderator')
   async createModerator(
-    @Body() createUserStoreDto: CreateUserStoreDto,
+    @Body() createModerator: CreateModeratorDto,
     @CurrentUser() currentAdmin: UserEntity,
   ) {
     return await this.usersService.createModerator(
-      createUserStoreDto,
+      createModerator,
       currentAdmin,
     );
   }
 
   @Get('moderator')
-  async getAllModerator(@CurrentUser() currentAdmin: UserEntity) {
-    return await this.usersService.getAllModerator(currentAdmin);
+  async getAllStore(@CurrentUser() currentAdmin: UserEntity) {
+    return await this.usersService.getAllStore(currentAdmin);
   }
 
   @Put('moderator/:id')
   async updateStatusStore(
     @Param('id') id: string,
-    @Body() updateStatusStore: UpdateStoreStatus,
+    @Body() updateStoreStatus: UpdateStoreStatus,
     @CurrentUser() currentAdmin: UserEntity,
   ) {
     return await this.usersService.updateStatusStore(
       id,
-      updateStatusStore,
+      updateStoreStatus.status,
       currentAdmin,
     );
   }
 
   @Get('moderator/paginate')
-  async getModeratorPaginate(
+  async getStorePaginate(
     @CurrentUser() currentAdmin: UserEntity,
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 10,
   ) {
-    return await this.usersService.getModeratorPaginate(
-      currentAdmin,
-      page,
-      limit,
+    return await this.usersService.getStorePaginate(currentAdmin, page, limit);
+  }
+
+  @Get('store/:id')
+  async getInforByIdStore(@Param() id: string) {
+    return await this.usersService.getInforByIdStore(id);
+  }
+
+  @Delete('store/:id')
+  async removeStoreUser(
+    @Param('id') id: string,
+    @CurrentUser() currentAdmin: UserEntity,
+  ): Promise<any[]> {
+    return await this.usersService.removeStoreUser(id, currentAdmin);
+  }
+
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.MODERATOR]))
+  @Post('staff')
+  async createStaff(
+    @Body() createStaff: CreateStaffDto,
+    @CurrentUser() currentStore: StoreEntity,
+  ) {
+    return await this.usersService.createStaffByStore(
+      createStaff,
+      currentStore,
     );
   }
 
-  @Get('paginate')
-  async findStorePaginate(
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 10,
-  ) {
-    return await this.usersService.findStorePaginate(page, limit);
-  }
-
-  @Get()
-  async findAll() {
-    return await this.usersService.findAll();
-  }
-
-  @UseGuards(
-    AuthenticationGuard,
-    AuthorizeGuard([Roles.SUPERADMIN, Roles.ADMIN]),
-  )
-  @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return await this.usersService.findOne(id);
-  }
-
-  @Delete(':id')
-  async remove(@Param('id') id: string): Promise<any[]> {
-    return await this.usersService.remove(id);
-  }
+  // @Get(':id')
+  // async findOne(@Param('id') id: string) {
+  //   return await this.usersService.findOne(id);
+  // }
 }

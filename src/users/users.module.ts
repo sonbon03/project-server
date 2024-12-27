@@ -1,13 +1,17 @@
-import { Module } from '@nestjs/common';
-import { UsersService } from './users.service';
-import { UsersController } from './users.controller';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UserEntity } from './entities/user.entity';
-import { StoreEntity } from './entities/store.entity';
 import { MailService } from 'src/mail/mail.service';
+import { StoreModule } from 'src/store/store.module';
+import { UserStoreEntity } from './entities/user-store.entity';
+import { UserEntity } from './entities/user.entity';
+import { UsersController } from './users.controller';
+import { UsersService } from './users.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([UserEntity, StoreEntity])],
+  imports: [
+    TypeOrmModule.forFeature([UserEntity, UserStoreEntity]),
+    forwardRef(() => StoreModule),
+  ],
   controllers: [UsersController],
   providers: [UsersService, MailService],
   exports: [UsersService],
