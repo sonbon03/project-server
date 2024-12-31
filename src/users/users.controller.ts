@@ -151,17 +151,7 @@ export class UsersController {
     return await this.usersService.getInforByIdStore(id);
   }
 
-  @Post('store/staff')
-  async createStaffByStore(
-    @Body() createStaff: CreateStaffDto,
-    @CurrentStore() currentStore: StoreEntity,
-  ) {
-    return await this.usersService.createStaffByStore(
-      createStaff,
-      currentStore,
-    );
-  }
-
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.MODERATOR]))
   @Delete('store/staff')
   async removeStaff(
     @Query('id') id: string,
@@ -170,6 +160,7 @@ export class UsersController {
     return await this.usersService.removeStaff(id, currentStore);
   }
 
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.MODERATOR]))
   @Patch('store/staff/:id')
   async updateStaff(
     @Query('id') id: string,
@@ -179,11 +170,13 @@ export class UsersController {
     return await this.usersService.updateStaff(currentStore, id, updateStaff);
   }
 
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.MODERATOR]))
   @Get('store/staff/all')
   async getAllStaff(@CurrentStore() currentStore: StoreEntity) {
     return await this.usersService.getAllStaff(currentStore);
   }
 
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.MODERATOR]))
   @Get('store/staff/:id')
   async getStaffById(
     @CurrentStore() currentStore: StoreEntity,
@@ -192,6 +185,7 @@ export class UsersController {
     return await this.usersService.getStaffById(id, currentStore);
   }
 
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.MODERATOR]))
   @Get('store/staff/paginate')
   async getStaffPaginate(
     @CurrentStore() currentStore: StoreEntity,
