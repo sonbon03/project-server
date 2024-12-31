@@ -41,12 +41,13 @@ export class ProductEntity {
   @ManyToOne(() => WarehouseEntity, (ware) => ware.products)
   warehouse: WarehouseEntity;
 
-  @OneToMany(() => ProductAttributeEntity, (prodAttri) => prodAttri.product, {
-    cascade: true,
-  })
+  @OneToMany(() => ProductAttributeEntity, (prodAttri) => prodAttri.product)
   productAttributes: ProductAttributeEntity[];
 
-  @ManyToOne(() => PromotionEntity, (prom) => prom.products)
+  @ManyToOne(() => PromotionEntity, (prom) => prom.products, {
+    onDelete: 'SET NULL',
+    nullable: true,
+  })
   promotion: PromotionEntity;
 
   @ManyToOne(() => StoreEntity, (store) => store.products)

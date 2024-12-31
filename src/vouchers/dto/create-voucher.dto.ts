@@ -13,7 +13,7 @@ export class CreateVoucherDto {
 
   @ApiProperty({})
   @IsNotEmpty({ message: 'Key not be empty' })
-  @Length(10)
+  @Length(5)
   @IsString()
   key: string;
 

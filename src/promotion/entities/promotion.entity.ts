@@ -41,7 +41,7 @@ export class PromotionEntity {
   @UpdateDateColumn()
   updatedAt: Timestamp;
 
-  @OneToMany(() => ProductEntity, (prod) => prod.promotion, { cascade: true })
+  @OneToMany(() => ProductEntity, (prod) => prod.promotion)
   products: ProductEntity[];
 
   @ManyToOne(() => StoreEntity, (store) => store.promotions)
