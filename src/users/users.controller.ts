@@ -24,6 +24,7 @@ import { CreateStaffDto } from './dto/create-staff.dto';
 import { SignInDto } from './dto/signin.dto';
 import { UserEntity } from './entities/user.entity';
 import { UsersService } from './users.service';
+import { CurrentStore } from 'src/utils/decoratores/current-store.decoratore';
 
 @Controller('users')
 export class UsersController {
@@ -76,6 +77,18 @@ export class UsersController {
   //   return profile;
   // }
 
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.MODERATOR]))
+  @Post('staff')
+  async createStaff(
+    @Body() createStaff: CreateStaffDto,
+    @CurrentStore() currentStore: StoreEntity,
+  ) {
+    return await this.usersService.createStaffByStore(
+      createStaff,
+      currentStore,
+    );
+  }
+
   @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Post('moderator')
   async createModerator(
@@ -88,11 +101,13 @@ export class UsersController {
     );
   }
 
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Get('moderator')
   async getAllStore(@CurrentUser() currentAdmin: UserEntity) {
     return await this.usersService.getAllStore(currentAdmin);
   }
 
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Put('moderator/:id')
   async updateStatusStore(
     @Param('id') id: string,
@@ -106,6 +121,7 @@ export class UsersController {
     );
   }
 
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Get('moderator/paginate')
   async getStorePaginate(
     @CurrentUser() currentAdmin: UserEntity,
@@ -115,29 +131,22 @@ export class UsersController {
     return await this.usersService.getStorePaginate(currentAdmin, page, limit);
   }
 
-  @Get('store/:id')
-  async getInforByIdStore(@Param() id: string) {
-    return await this.usersService.getInforByIdStore(id);
-  }
-
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Delete('store/:id')
   async removeStoreUser(
     @Param('id') id: string,
     @CurrentUser() currentAdmin: UserEntity,
-  ): Promise<any[]> {
+  ) {
     return await this.usersService.removeStoreUser(id, currentAdmin);
   }
 
-  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.MODERATOR]))
-  @Post('staff')
-  async createStaff(
-    @Body() createStaff: CreateStaffDto,
-    @CurrentUser() currentStore: StoreEntity,
-  ) {
-    return await this.usersService.createStaffByStore(
-      createStaff,
-      currentStore,
-    );
+  @UseGuards(
+    AuthenticationGuard,
+    AuthorizeGuard([Roles.ADMIN, Roles.MODERATOR]),
+  )
+  @Get('store/:id')
+  async getInforByIdStore(@Param('id') id: string) {
+    return await this.usersService.getInforByIdStore(id);
   }
 
   // @Get(':id')

@@ -2,7 +2,6 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ProductsService } from 'src/products/products.service';
-import { checkText } from 'src/utils/common/CheckText';
 import { Repository } from 'typeorm';
 import { CreatePromotionDto } from './dto/create-promotion.dto';
 import { UpdatePromotionDto } from './dto/update-promotion.dto';
@@ -25,11 +24,12 @@ export class PromotionService {
       throw new BadRequestException(
         'The start day must be less than the end day',
       );
-    if (checkText(createPromotionDto.name)) {
-      throw new BadRequestException(
-        'The promotion contains special characters',
-      );
-    }
+    await Promise.all(
+      createPromotionDto.product_id.map(async (id) => {
+        const product = await this.productsService.findOne(id, currentStore);
+        if (!product) throw new BadRequestException('Product not found');
+      }),
+    );
     const checkPromotion = await this.promotionRepository.findOne({
       where: {
         key: createPromotionDto.key,
@@ -40,27 +40,47 @@ export class PromotionService {
       throw new BadRequestException('Promotion exists');
     }
     let promotion;
-    for (let i = 0; i < createPromotionDto.product_id.length; i++) {
-      const product = await this.productsService.findOneProductAttribute(
-        createPromotionDto.product_id[i],
-        currentStore,
-      );
-      if (product.promotion === null) {
-        promotion = await this.promotionRepository.create(createPromotionDto);
-        promotion.store = currentStore;
-        promotion = await this.promotionRepository.save(promotion);
-        await this.productsService.addPromotion(
-          createPromotionDto.product_id[i],
-          promotion,
-        );
-      } else {
-        promotion = await this.update(
-          product.promotion.id,
-          createPromotionDto,
+    await Promise.all(
+      createPromotionDto.product_id.map(async (products) => {
+        const product = await this.productsService.findOneProductAttribute(
+          products,
           currentStore,
         );
-      }
-    }
+        if (product.promotion === null) {
+          promotion = await this.promotionRepository.create(createPromotionDto);
+          promotion.store = currentStore;
+          promotion = await this.promotionRepository.save(promotion);
+          await this.productsService.addPromotion(products, promotion);
+        } else {
+          promotion = await this.update(
+            product.promotion.id,
+            createPromotionDto,
+            currentStore,
+          );
+        }
+      }),
+    );
+    // for (let i = 0; i < createPromotionDto.product_id.length; i++) {
+    //   const product = await this.productsService.findOneProductAttribute(
+    //     createPromotionDto.product_id[i],
+    //     currentStore,
+    //   );
+    //   if (product.promotion === null) {
+    //     promotion = await this.promotionRepository.create(createPromotionDto);
+    //     promotion.store = currentStore;
+    //     promotion = await this.promotionRepository.save(promotion);
+    //     await this.productsService.addPromotion(
+    //       createPromotionDto.product_id[i],
+    //       promotion,
+    //     );
+    //   } else {
+    //     promotion = await this.update(
+    //       product.promotion.id,
+    //       createPromotionDto,
+    //       currentStore,
+    //     );
+    //   }
+    // }
     return await this.findOne(promotion.id, currentStore);
   }
 
@@ -124,7 +144,6 @@ export class PromotionService {
     const promotion = await this.findOne(id, currentStore);
 
     Object.assign(promotion, fields);
-    promotion.store = currentStore;
 
     const data = await this.promotionRepository.save(promotion);
 
@@ -164,7 +183,7 @@ export class PromotionService {
     return await this.promotionRepository.delete(id);
   }
 
-  @Cron(CronExpression.EVERY_HOUR)
+  @Cron(CronExpression.EVERY_10_MINUTES)
   async handleCheckTime() {
     const activePromotions = await this.promotionRepository.find();
 

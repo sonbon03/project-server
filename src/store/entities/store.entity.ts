@@ -55,8 +55,6 @@ export class StoreEntity {
   @OneToMany(() => NotificationEntity, (noti) => noti.store)
   notify: NotificationEntity[];
 
-  @OneToMany(() => UserStoreEntity, (userStore) => userStore.store, {
-    onDelete: 'CASCADE',
-  })
+  @OneToMany(() => UserStoreEntity, (userStore) => userStore.store)
   user_store: UserStoreEntity[];
 }

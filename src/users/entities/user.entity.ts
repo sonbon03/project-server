@@ -31,7 +31,7 @@ export class UserEntity {
   @Column({ select: false, nullable: true })
   password?: string;
 
-  @Column({ type: 'enum', enum: Roles, default: Roles.ADMIN })
+  @Column({ type: 'enum', enum: Roles })
   roles: Roles;
 
   @Column({ nullable: true })
@@ -69,8 +69,6 @@ export class UserEntity {
   @OneToMany(() => PoolEntity, (pool) => pool.user)
   pools: PoolEntity[];
 
-  @OneToMany(() => UserStoreEntity, (userStore) => userStore.user, {
-    onDelete: 'CASCADE',
-  })
+  @OneToMany(() => UserStoreEntity, (userStore) => userStore.user)
   user_store: UserStoreEntity[];
 }

@@ -46,7 +46,7 @@ export class ProductEntity {
   })
   productAttributes: ProductAttributeEntity[];
 
-  @ManyToOne(() => PromotionEntity, (prom) => prom.products, { cascade: true })
+  @ManyToOne(() => PromotionEntity, (prom) => prom.products)
   promotion: PromotionEntity;
 
   @ManyToOne(() => StoreEntity, (store) => store.products)

@@ -9,8 +9,6 @@ export class CreateVoucherDto {
 
   @ApiProperty({})
   @IsNotEmpty({ message: 'Discount money must be empty' })
-  @IsNumber()
-  @Min(0)
   money: number;
 
   @ApiProperty({})

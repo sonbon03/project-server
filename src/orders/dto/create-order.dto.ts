@@ -5,12 +5,12 @@ import { CreatePaymentDto } from './create-payment.dto';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateOrderDto {
-  @ApiProperty({})
+  @ApiProperty({ type: [CreateOrderProductDto] })
   @Type(() => CreateOrderProductDto)
   @ValidatePromise()
   products: CreateOrderProductDto[];
 
-  @ApiProperty({})
+  @ApiProperty({ type: CreatePaymentDto })
   @Type(() => CreatePaymentDto)
   @ValidatePromise()
   payment: CreatePaymentDto;

@@ -1,13 +1,18 @@
-import { BadRequestException, Injectable, Optional } from '@nestjs/common';
+import {
+  BadRequestException,
+  forwardRef,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Roles } from 'src/utils/enums/user-roles.enum';
 import { Repository } from 'typeorm';
-import { StoreEntity } from './entities/store.entity';
-import { StoreCustomerEntity } from './entities/store-customer.entity';
-import { CreateStoreDto } from './dto/create-store.dto';
 import { UsersService } from '../users/users.service';
 import { CreateCustomerDto } from './dto/create-customer.dto';
-import { Roles } from 'src/utils/enums/user-roles.enum';
+import { CreateStoreDto } from './dto/create-store.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
+import { StoreCustomerEntity } from './entities/store-customer.entity';
+import { StoreEntity } from './entities/store.entity';
 
 @Injectable()
 export class StoreService {
@@ -16,7 +21,8 @@ export class StoreService {
     private readonly storeRepository: Repository<StoreEntity>,
     @InjectRepository(StoreCustomerEntity)
     private readonly storeCustomerRepository: Repository<StoreCustomerEntity>,
-    @Optional() private readonly usersService: UsersService,
+    @Inject(forwardRef(() => UsersService))
+    private readonly usersService: UsersService,
   ) {}
 
   async createStore(createStore: CreateStoreDto) {
@@ -148,5 +154,15 @@ export class StoreService {
       throw new Error('Customer not found');
     }
     return customer;
+  }
+
+  async findStore(storeId: string) {
+    const store = await this.storeRepository.findOne({
+      where: { id: storeId },
+    });
+    if (!store) {
+      throw new Error('Store not found');
+    }
+    return store;
   }
 }

@@ -1,18 +1,19 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsNotEmpty, ValidatePromise } from 'class-validator';
+import { IsOptional, ValidatePromise } from 'class-validator';
 import { CreateStoreDto } from 'src/store/dto/create-store.dto';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
-import { SignInDto } from './signin.dto';
 import { Status } from 'src/utils/enums/user-status.enum';
+import { SignInDto } from './signin.dto';
 
 export class CreateModeratorDto extends SignInDto {
   @ApiProperty({})
-  @IsNotEmpty({ message: 'Salary not empty' })
+  // @IsNotEmpty({ message: 'Salary not empty' })
+  @IsOptional()
   salary: string;
 
   @ApiProperty({})
-  @IsNotEmpty({ message: 'Store not empty' })
+  @IsOptional()
   status: Status;
 
   @ApiProperty({ type: CreateUserDto })

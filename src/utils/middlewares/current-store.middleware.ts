@@ -2,13 +2,13 @@ import { Injectable, NestMiddleware } from '@nestjs/common';
 import { isArray } from 'class-validator';
 import { NextFunction, Request, Response } from 'express';
 import { verify } from 'jsonwebtoken';
-import { UserStoreEntity } from 'src/users/entities/user-store.entity';
+import { StoreEntity } from 'src/store/entities/store.entity';
 import { UsersService } from 'src/users/users.service';
 
 declare global {
   namespace Express {
     interface Request {
-      currentStore?: UserStoreEntity;
+      currentStore?: StoreEntity;
     }
   }
 }

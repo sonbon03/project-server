@@ -1,9 +1,10 @@
 import {
   BadRequestException,
+  forwardRef,
   HttpException,
+  Inject,
   Injectable,
   NotFoundException,
-  Optional,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { compare, hash } from 'bcrypt';
@@ -31,21 +32,22 @@ export class UsersService {
     private readonly usersRepository: Repository<UserEntity>,
     @InjectRepository(UserStoreEntity)
     private readonly userStoreRepository: Repository<UserStoreEntity>,
-    @Optional() private readonly storeService: StoreService,
+    @Inject(forwardRef(() => StoreService))
+    private readonly storeService: StoreService,
     private readonly mailService: MailService,
   ) {}
 
   async signup(userCreateDto: CreateAdminDto): Promise<any> {
     const userExists = await this.usersRepository.find({
-      where: { email: userCreateDto.email },
+      where: { email: userCreateDto.email, roles: Roles.ADMIN },
     });
-    if (userExists) {
+    if (userExists && userExists.length > 0) {
       throw new BadRequestException('Email already exists');
     }
     let user = await this.usersRepository.create(userCreateDto);
     user.password = await hash(userCreateDto.password, 10);
     user.status = Status.PENDING;
-
+    user.roles = Roles.ADMIN;
     const emailVerificationToken = uuidv4();
     user.emailVerificationToken = emailVerificationToken;
 
@@ -124,17 +126,18 @@ export class UsersService {
   }
 
   async findOneStoreUser(id: string) {
-    const store = await this.userStoreRepository.findOne({
-      where: { id: id },
+    const user = await this.userStoreRepository.findOne({
+      where: { userId: id },
       relations: {
         user: true,
-        store: true,
       },
     });
 
-    if (!store) throw new NotFoundException('User is not found!');
+    if (!user) throw new NotFoundException('User is not found!');
+    const store = await this.storeService.findStore(user.storeId);
+    const result = { ...store, roles: user.user.roles };
 
-    return store;
+    return result;
   }
 
   async findOne(storeId: string) {
@@ -156,9 +159,10 @@ export class UsersService {
         },
       },
     });
-    if (checkPhone) {
+    if (checkPhone.length > 0) {
       throw new Error('Phone number already exists');
     }
+
     const customer = {
       ...user,
       roles: Roles.CUSTOMER,
@@ -166,6 +170,7 @@ export class UsersService {
     };
     return await this.usersRepository.save(customer);
   }
+
   async updateUser(user: UserEntity) {
     const checkUser = await this.usersRepository.findOne({
       where: { id: user.id },
@@ -188,22 +193,25 @@ export class UsersService {
     const userModerator = {
       ...createModerator.user,
       status: createModerator.status,
-      role: Roles.MODERATOR,
+      roles: Roles.MODERATOR,
       email: createModerator.email,
       password: await hash(createModerator.password, 10),
     };
 
-    const user = await this.usersRepository.save(userModerator);
+    try {
+      const user = await this.usersRepository.save(userModerator);
+      const store = await this.storeService.createStore(createModerator.store);
 
-    const store = await this.storeService.createStore(createModerator.store);
+      const userStore = {
+        userId: user.id,
+        storeId: store.id,
+        adminId: currentAdmin.id,
+      };
 
-    const userStore = {
-      userId: user.id,
-      storeId: store.id,
-      adminId: currentAdmin.id,
-    };
-
-    return await this.userStoreRepository.save(userStore);
+      return await this.userStoreRepository.save(userStore);
+    } catch (error) {
+      throw new Error('Can not add');
+    }
   }
 
   async updateStatusStore(
@@ -232,12 +240,18 @@ export class UsersService {
         store: true,
         user: true,
       },
+      order: { createdAt: 'DESC' },
     });
     if (!stores) throw new BadRequestException('Store not found!');
-    const result = [
-      ...stores.map((item) => item.store),
-      ...stores.map((item) => item.user),
-    ];
+
+    const result = stores.map((item) => ({
+      store: item.store,
+      user: item.user,
+      id: item.id,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
+    }));
+
     return result;
   }
 
@@ -272,20 +286,22 @@ export class UsersService {
   async getInforByIdStore(storeId: string) {
     const store = await this.userStoreRepository.findOne({
       where: { storeId: storeId },
+      relations: {
+        user: true,
+        store: true,
+      },
     });
     if (!store) throw new BadRequestException('Store not found!');
     return store;
   }
 
-  async removeStoreUser(id: string, currentAdmin: UserEntity): Promise<any[]> {
+  async removeStoreUser(id: string, currentAdmin: UserEntity) {
     const findStore = await this.userStoreRepository.findOne({
       where: { storeId: id, adminId: currentAdmin.id },
     });
 
     if (!findStore) throw new BadRequestException('Store not found!');
-
-    await this.userStoreRepository.delete(id);
-    return [];
+    return await this.userStoreRepository.delete({ storeId: id });
   }
 
   async createStaffByStore(
@@ -301,8 +317,8 @@ export class UsersService {
         },
       },
     });
-    if (checkPhone) {
-      throw new Error('Phone number already exists');
+    if (checkPhone.length > 0) {
+      throw new BadRequestException('Phone number already exists');
     }
     const staff = {
       ...createStaff,

@@ -20,7 +20,8 @@ export class CategoriesService {
     const checkKey = await this.categoryRepository.find({
       where: { key: createCategoryDto.key, store: { id: currentStore.id } },
     });
-    if (checkKey) throw new BadRequestException('Category was exists');
+    if (checkKey.length > 0)
+      throw new BadRequestException('Category was exists');
     if (checkText(createCategoryDto.name)) {
       throw new BadRequestException(
         'The category name contains special characters',
@@ -55,10 +56,13 @@ export class CategoriesService {
     fields: Partial<UpdateCategoryDto>,
     currentStore: StoreEntity,
   ): Promise<CategoryEntity> {
-    const checkKey = await this.categoryRepository.find({
-      where: { key: fields.key, store: { id: currentStore.id } },
-    });
-    if (checkKey) throw new BadRequestException('Category was exists');
+    if (fields.key) {
+      const checkKey = await this.categoryRepository.find({
+        where: { key: fields.key, store: { id: currentStore.id } },
+      });
+      if (checkKey.length > 0)
+        throw new BadRequestException('Category was exists');
+    }
 
     const category = await this.findOne(id, currentStore);
     if (!category) throw new BadRequestException('Category not found!');

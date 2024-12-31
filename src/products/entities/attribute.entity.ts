@@ -1,6 +1,5 @@
 import { StatusAttibute } from 'src/utils/enums/user-status.enum';
 import {
-  Check,
   Column,
   CreateDateColumn,
   Entity,
@@ -29,17 +28,15 @@ export class AttributeEntity {
   @Column()
   description: string;
 
-  @Check('"amount" > 0')
   @Column()
   amount: number;
 
-  @Column()
+  @Column({ type: 'date' })
   expiryDay: Date;
 
-  @Column({ type: 'date', nullable: true })
-  manufactureDate: Date | null;
+  @Column({ type: 'date' })
+  manufactureDate: Date;
 
-  @Check('"price" > 0')
   @Column({ type: 'decimal', precision: 10, scale: 3 })
   price: number;
 

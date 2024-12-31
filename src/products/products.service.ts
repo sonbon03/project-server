@@ -36,6 +36,15 @@ export class ProductsService {
     createProductAttributeDto: CreateProductAttributeDto,
     currentStore: StoreEntity,
   ) {
+    await Promise.all(
+      createProductAttributeDto.attributes.map(async (attribute) => {
+        if (attribute.manufactureDate > attribute.expiryDay) {
+          throw new BadRequestException(
+            'Manufacture day must before expiry day',
+          );
+        }
+      }),
+    );
     const productEntity = new ProductEntity();
     for (const attri of createProductAttributeDto.attributes) {
       const check = await this.findKey(attri.key, currentStore);
@@ -163,12 +172,19 @@ export class ProductsService {
   // ============================== END: Create PRODUCTS ==============================
 
   async findAll(currentStore: StoreEntity) {
-    const products = await this.productRepository.find({
-      where: { store: { id: currentStore.id } },
+    const products = await this.productAttributeRepository.find({
+      where: {
+        product: {
+          store: { id: currentStore.id },
+        },
+      },
       relations: {
-        category: true,
-        store: true,
-        warehouse: true,
+        product: {
+          category: true,
+          store: true,
+          warehouse: true,
+        },
+        attribute: true,
       },
     });
     if (!products) throw new BadRequestException('Products not found!');
@@ -218,8 +234,12 @@ export class ProductsService {
           product.id,
           currentStore,
         );
+        const attributes = Object.values(productAttribute.attributes || {});
 
-        return productAttribute;
+        return {
+          ...productAttribute,
+          attributes,
+        };
       }),
     );
     const totalPages = Math.ceil(total / limit);
@@ -389,19 +409,19 @@ export class ProductsService {
     return product;
   }
 
-  async addPromotion(ids: string, promotion: PromotionEntity) {
-    const products = await this.productRepository.find({
+  async addPromotion(id: string, promotion: PromotionEntity) {
+    const products = await this.productRepository.findOne({
       where: {
-        id: ids,
+        id: id,
       },
     });
     if (!products) {
       throw new BadRequestException('Product not found');
     }
-    for (let i = 0; i < products.length; i++) {
-      products[i].promotion = promotion;
-      await this.productAttributeRepository.save(products);
-    }
+    products.promotion = promotion;
+    await this.productRepository.save(products);
+
+    return true;
   }
 
   async removePromotionProducts(idsPromotion: string) {

@@ -1,15 +1,15 @@
-import { forwardRef, Module } from '@nestjs/common';
-import { PromotionService } from './promotion.service';
-import { PromotionController } from './promotion.controller';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { PromotionEntity } from './entities/promotion.entity';
-import { ProductsModule } from 'src/products/products.module';
 import { ProductAttributeEntity } from 'src/products/entities/product-attribute.entity';
+import { ProductsModule } from 'src/products/products.module';
+import { PromotionEntity } from './entities/promotion.entity';
+import { PromotionController } from './promotion.controller';
+import { PromotionService } from './promotion.service';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([PromotionEntity, ProductAttributeEntity]),
-    forwardRef(() => ProductsModule),
+    ProductsModule,
   ],
   controllers: [PromotionController],
   providers: [PromotionService],

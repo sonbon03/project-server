@@ -22,5 +22,6 @@ export class CreateUserDto {
 
   @ApiProperty({})
   @IsNotEmpty({ message: 'Gender not empty' })
-  gender: Gender;
+  @IsOptional()
+  gender?: Gender;
 }

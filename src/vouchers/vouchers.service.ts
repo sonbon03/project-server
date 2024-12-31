@@ -71,10 +71,12 @@ export class VouchersService {
     fields: Partial<UpdateVoucherDto>,
     currentStore: StoreEntity,
   ) {
-    const checkKey = await this.vouchersRepository.findOne({
-      where: { key: fields.key, store: { id: currentStore.id } },
-    });
-    if (checkKey) throw new BadRequestException('Key exists');
+    if (fields.key) {
+      const checkKey = await this.vouchersRepository.findOne({
+        where: { key: fields.key, store: { id: currentStore.id } },
+      });
+      if (!checkKey) throw new BadRequestException('Key exists');
+    }
     const voucher = await this.findOne(id, currentStore);
     Object.assign(voucher, fields);
     return await this.vouchersRepository.save(voucher);
@@ -86,7 +88,7 @@ export class VouchersService {
     });
     if (!voucher) throw new BadRequestException('Voucher not found');
 
-    return await this.vouchersRepository.delete(voucher);
+    return await this.vouchersRepository.delete(voucher.id);
   }
 
   async getVouchersByTotal(total: number, currentStore: StoreEntity) {
