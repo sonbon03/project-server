@@ -6,6 +6,7 @@ import {
   HttpException,
   HttpStatus,
   Param,
+  Patch,
   Post,
   Put,
   Query,
@@ -25,6 +26,7 @@ import { SignInDto } from './dto/signin.dto';
 import { UserEntity } from './entities/user.entity';
 import { UsersService } from './users.service';
 import { CurrentStore } from 'src/utils/decoratores/current-store.decoratore';
+import { UpdateStaffDto } from './dto/update-staff.dto';
 
 @Controller('users')
 export class UsersController {
@@ -147,6 +149,56 @@ export class UsersController {
   @Get('store/:id')
   async getInforByIdStore(@Param('id') id: string) {
     return await this.usersService.getInforByIdStore(id);
+  }
+
+  @Post('store/staff')
+  async createStaffByStore(
+    @Body() createStaff: CreateStaffDto,
+    @CurrentStore() currentStore: StoreEntity,
+  ) {
+    return await this.usersService.createStaffByStore(
+      createStaff,
+      currentStore,
+    );
+  }
+
+  @Delete('store/staff')
+  async removeStaff(
+    @Query('id') id: string,
+    @CurrentStore() currentStore: StoreEntity,
+  ) {
+    return await this.usersService.removeStaff(id, currentStore);
+  }
+
+  @Patch('store/staff/:id')
+  async updateStaff(
+    @Query('id') id: string,
+    @CurrentStore() currentStore: StoreEntity,
+    @Body() updateStaff: UpdateStaffDto,
+  ) {
+    return await this.usersService.updateStaff(currentStore, id, updateStaff);
+  }
+
+  @Get('store/staff/all')
+  async getAllStaff(@CurrentStore() currentStore: StoreEntity) {
+    return await this.usersService.getAllStaff(currentStore);
+  }
+
+  @Get('store/staff/:id')
+  async getStaffById(
+    @CurrentStore() currentStore: StoreEntity,
+    @Query('id') id: string,
+  ) {
+    return await this.usersService.getStaffById(id, currentStore);
+  }
+
+  @Get('store/staff/paginate')
+  async getStaffPaginate(
+    @CurrentStore() currentStore: StoreEntity,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+  ) {
+    return await this.usersService.getStaffPaginate(page, limit, currentStore);
   }
 
   // @Get(':id')

@@ -6,13 +6,18 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { StoreService } from './store.service';
 import { CurrentStore } from 'src/utils/decoratores/current-store.decoratore';
 import { StoreEntity } from './entities/store.entity';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
+import { AuthenticationGuard } from 'src/utils/guards/authentication.guard';
+import { AuthorizeGuard } from 'src/utils/guards/authorization.guard';
+import { Roles } from 'src/utils/enums/user-roles.enum';
 
+@UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.MODERATOR, Roles.ADMIN]))
 @Controller('store')
 export class StoreController {
   constructor(private readonly storeService: StoreService) {}

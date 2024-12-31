@@ -421,12 +421,12 @@ export class UsersService {
   }
 
   async updateStaff(
-    currentAdmin: UserEntity,
+    currentStore: StoreEntity,
     id: string,
     fields: Partial<UpdateStaffDto>,
   ) {
     const staff = await this.userStoreRepository.findOne({
-      where: { adminId: currentAdmin.id, user: { id } },
+      where: { storeId: currentStore.id, user: { id } },
     });
     if (!staff) throw new BadRequestException('Staff not exists');
     Object.assign(staff.user, fields);
