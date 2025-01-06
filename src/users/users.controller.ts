@@ -79,18 +79,6 @@ export class UsersController {
   //   return profile;
   // }
 
-  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.MODERATOR]))
-  @Post('staff')
-  async createStaff(
-    @Body() createStaff: CreateStaffDto,
-    @CurrentStore() currentStore: StoreEntity,
-  ) {
-    return await this.usersService.createStaffByStore(
-      createStaff,
-      currentStore,
-    );
-  }
-
   @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Post('moderator')
   async createModerator(
@@ -152,6 +140,18 @@ export class UsersController {
   }
 
   @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.MODERATOR]))
+  @Post('store/staff')
+  async createStaff(
+    @Body() createStaff: CreateStaffDto,
+    @CurrentStore() currentStore: StoreEntity,
+  ) {
+    return await this.usersService.createStaffByStore(
+      createStaff,
+      currentStore,
+    );
+  }
+
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.MODERATOR]))
   @Delete('store/staff')
   async removeStaff(
     @Query('id') id: string,
@@ -192,6 +192,7 @@ export class UsersController {
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 10,
   ) {
+    console.log('getStaffPaginate');
     return await this.usersService.getStaffPaginate(page, limit, currentStore);
   }
 

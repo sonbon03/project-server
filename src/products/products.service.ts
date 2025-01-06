@@ -183,11 +183,24 @@ export class ProductsService {
           category: true,
           store: true,
           warehouse: true,
+          promotion: true,
         },
         attribute: true,
       },
     });
-    if (!products) throw new BadRequestException('Products not found!');
+    if (products.length === 0)
+      throw new BadRequestException('Products not found!');
+    return products;
+  }
+
+  async getNameAll(currentStore: StoreEntity) {
+    const products = await this.productRepository.find({
+      where: {
+        store: { id: currentStore.id },
+      },
+    });
+    if (products.length === 0)
+      throw new BadRequestException('Products not found!');
     return products;
   }
 
@@ -252,8 +265,8 @@ export class ProductsService {
   }
 
   async findOneAttribute(
-    id_attribute: string,
     id_product: string,
+    id_attribute: string,
   ): Promise<ProductAttributeEntity> {
     const attribute = await this.productAttributeRepository.findOne({
       where: {
@@ -270,6 +283,7 @@ export class ProductsService {
         attribute: true,
       },
     });
+
     if (!attribute)
       throw new BadRequestException('Product attribute not found!');
     return attribute;
@@ -292,7 +306,8 @@ export class ProductsService {
         },
       },
     });
-    if (!productsAttri) throw new BadRequestException('Products not found!');
+    if (productsAttri.length === 0)
+      throw new BadRequestException('Products not found!');
 
     const result: {
       product: ProductEntity;

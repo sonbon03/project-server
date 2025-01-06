@@ -24,12 +24,12 @@ export class PromotionService {
       throw new BadRequestException(
         'The start day must be less than the end day',
       );
-    await Promise.all(
-      createPromotionDto.product_id.map(async (id) => {
-        const product = await this.productsService.findOne(id, currentStore);
-        if (!product) throw new BadRequestException('Product not found');
-      }),
-    );
+    // await Promise.all(
+    //   createPromotionDto.product_id.map(async (id) => {
+    //     const product = await this.productsService.findOne(id, currentStore);
+    //     if (!product) throw new BadRequestException('Product not found');
+    //   }),
+    // );
     const checkPromotion = await this.promotionRepository.findOne({
       where: {
         key: createPromotionDto.key,
@@ -132,15 +132,15 @@ export class PromotionService {
     fields: Partial<UpdatePromotionDto>,
     currentStore: StoreEntity,
   ): Promise<PromotionEntity> {
-    const checkPromotion = await this.promotionRepository.findOne({
-      where: {
-        key: fields.key,
-        store: { id: currentStore.id },
-      },
-    });
-    if (checkPromotion) {
-      throw new BadRequestException('Promotion exists');
-    }
+    // const checkPromotion = await this.promotionRepository.findOne({
+    //   where: {
+    //     key: fields.key,
+    //     store: { id: currentStore.id },
+    //   },
+    // });
+    // if (checkPromotion) {
+    //   throw new BadRequestException('Promotion exists');
+    // }
     const promotion = await this.findOne(id, currentStore);
 
     Object.assign(promotion, fields);

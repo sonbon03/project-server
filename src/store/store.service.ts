@@ -56,15 +56,15 @@ export class StoreService {
           roles: Roles.CUSTOMER,
         },
       },
+      relations: {
+        user: true,
+      },
     });
-    const result = {
-      store: currentStore,
-      users: customers.map((customer) => ({
-        quantityOrder: customer.quantityOrder,
-        point: customer.point,
-        user: customer.user,
-      })),
-    };
+    const result = customers.map((customer) => ({
+      quantityOrder: customer.quantityOrder,
+      point: customer.point,
+      ...customer.user,
+    }));
     return result;
   }
 
@@ -89,7 +89,7 @@ export class StoreService {
     const totalPages = Math.ceil(total / limit);
 
     return {
-      data: result,
+      items: result,
       currentPage: Number(page),
       totalPages: totalPages,
       totalItems: total,
@@ -128,7 +128,10 @@ export class StoreService {
     fields: Partial<UpdateCustomerDto>,
   ) {
     const customer = await this.storeCustomerRepository.findOne({
-      where: { store: { id: currentStore.id }, user: { id } },
+      where: { store: { id: currentStore.id }, id: id },
+      relations: {
+        user: true,
+      },
     });
     if (!customer) throw new BadRequestException('Customer not exists');
     Object.assign(customer.user, fields);

@@ -10,6 +10,10 @@ export class CreateUserDto {
   last_name: string;
 
   @ApiProperty({})
+  @IsOptional()
+  birthday: Date;
+
+  @ApiProperty({})
   @IsNotEmpty({ message: 'First name not empty' })
   @IsString()
   first_name: string;

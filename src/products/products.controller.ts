@@ -52,12 +52,28 @@ export class ProductsController {
     return await this.productsService.findAll(currentStore);
   }
 
+  @Get('all')
+  async getNameAll(@CurrentStore() currentStore: StoreEntity) {
+    return await this.productsService.getNameAll(currentStore);
+  }
+
   @Get(':id')
   async findOne(
     @Param('id') id: string,
     @CurrentStore() currentStore: StoreEntity,
   ) {
     return await this.productsService.findOne(id, currentStore);
+  }
+
+  @Get('attribute/:id_product/:id_attribute')
+  async findOneAttribute(
+    @Param('id_product') id_product: string,
+    @Param('id_attribute') id_attribute: string,
+  ) {
+    return await this.productsService.findOneAttribute(
+      id_product,
+      id_attribute,
+    );
   }
 
   @Get('product-attribute/:id')

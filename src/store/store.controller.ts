@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Param,
   Patch,
   Post,
   Query,
@@ -67,7 +68,7 @@ export class StoreController {
   @Patch('customer/:id')
   async updateCustomer(
     @CurrentStore() currentStore: StoreEntity,
-    @Query('id') id: string,
+    @Param('id') id: string,
     @Body() updateCustomer: UpdateCustomerDto,
   ) {
     return await this.storeService.updateCustomer(

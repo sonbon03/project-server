@@ -400,7 +400,12 @@ export class UsersService {
     const skip = (page - 1) * limit;
     const take = limit;
     const [result, total] = await this.userStoreRepository.findAndCount({
-      where: { storeId: currentStore.id },
+      where: {
+        storeId: currentStore.id,
+        user: {
+          roles: Roles.STAFF,
+        },
+      },
       relations: {
         store: true,
         user: true,
@@ -410,10 +415,12 @@ export class UsersService {
       order: { createdAt: 'DESC' },
     });
 
+    console.log(result);
+
     const totalPages = Math.ceil(total / limit);
 
     return {
-      data: result,
+      items: result,
       currentPage: Number(page),
       totalPages: totalPages,
       totalItems: total,
