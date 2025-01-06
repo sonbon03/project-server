@@ -465,11 +465,6 @@ export class ProductsService {
       if (productAttri.attribute.amount < stock)
         throw new BadRequestException('Insufficient product');
       productAttri.attribute.amount -= stock;
-      if (productAttri.product.promotion) {
-        productAttri.product.promotion.quantity -= 1;
-        if (productAttri.product.promotion.quantity === 0)
-          productAttri.product.promotion = null;
-      }
       if (productAttri.attribute.amount === 0)
         productAttri.attribute.status === StatusAttibute.NOT;
     } else {
@@ -477,5 +472,18 @@ export class ProductsService {
     }
     productAttri = await this.productAttributeRepository.save(productAttri);
     return productAttri;
+  }
+
+  async updateAttribute(idAttribute: string, quantity: number) {
+    const attribute = await this.attributeRepository.findOneById(idAttribute);
+    if (!attribute) {
+      throw new BadRequestException('Attribute not found');
+    }
+    if (attribute.amount >= quantity) {
+      attribute.amount -= quantity;
+    } else {
+      throw new BadRequestException('Insufficient product');
+    }
+    return await this.attributeRepository.save(attribute);
   }
 }

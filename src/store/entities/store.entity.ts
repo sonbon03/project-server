@@ -1,5 +1,6 @@
 import { CategoryEntity } from 'src/categories/entities/category.entity';
 import { NotificationEntity } from 'src/notification/entities/notification.entity';
+import { OrderEntity } from 'src/orders/entities/order.entity';
 import { ProductEntity } from 'src/products/entities/product.entity';
 import { PromotionEntity } from 'src/promotion/entities/promotion.entity';
 import { StatisticEntity } from 'src/statistic/entities/statistic.entity';
@@ -57,4 +58,7 @@ export class StoreEntity {
 
   @OneToMany(() => UserStoreEntity, (userStore) => userStore.store)
   user_store: UserStoreEntity[];
+
+  @OneToMany(() => OrderEntity, (order) => order.store)
+  orders: OrderEntity[];
 }

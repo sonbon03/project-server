@@ -17,6 +17,7 @@ import { UpdatePaymentStatusDto } from './dto/update-payment-status.dto';
 import { OrderProductEntity } from './entities/order-product.entity';
 import { OrderEntity } from './entities/order.entity';
 import { PaymentEntity } from './entities/payment.entity';
+import { hash } from 'bcrypt';
 
 @Injectable()
 export class OrdersService {
@@ -32,35 +33,31 @@ export class OrdersService {
   ) {}
 
   async create(createOrderDto: CreateOrderDto, currentStore: StoreEntity) {
-    for (let i = 0; i < createOrderDto.products.length; i++) {
+    let totalPrice: number = 0;
+    let totalQuantity: number = 0;
+    let totalMoneyDiscount: number = 0;
+    for (const product of createOrderDto.products) {
       const productAttribute = await this.productsService.findOneAttribute(
-        createOrderDto.products[i].id_attribute,
-        createOrderDto.products[i].id_product,
+        product.id_product,
+        product.id_attribute,
       );
-      if (productAttribute.product.promotion) {
-        const price =
-          productAttribute.attribute.price *
-          (1 - productAttribute.product.promotion.percentage / 100);
-        if (price !== createOrderDto.products[i].price)
-          throw new BadRequestException('Incorrect billing for product');
+      if (productAttribute.attribute.amount < product.quantity) {
+        throw new BadRequestException('Not enough quantity');
       }
 
       if (productAttribute.attribute.status === StatusAttibute.NOT) {
         throw new BadRequestException('Product out of stock');
       }
-    }
+      const discount = productAttribute.product?.promotion
+        ? 1 - Number(productAttribute.product.promotion.percentage) / 100
+        : 1;
 
-    const totalQuantity = createOrderDto.products.reduce(
-      (sum, product) => sum + product.quantity,
-      0,
-    );
-    let totalAmount = createOrderDto.products.reduce(
-      (sum, product) => sum + product.price * product.quantity,
-      0,
-    );
+      totalPrice +=
+        productAttribute.attribute.price * product.quantity * discount;
 
-    if (totalAmount !== createOrderDto.payment.total) {
-      throw new BadRequestException('Incorrect billing for order');
+      totalQuantity += product.quantity;
+      totalMoneyDiscount +=
+        productAttribute.attribute.price * product.quantity * (1 - discount);
     }
 
     let voucher: VoucherEnity;
@@ -69,7 +66,11 @@ export class OrdersService {
         createOrderDto.id_voucher,
         currentStore,
       );
-      totalAmount -= voucher?.money;
+      totalPrice -= voucher?.money;
+    }
+
+    if (totalPrice !== createOrderDto.payment.total) {
+      throw new BadRequestException('Invalid total price');
     }
 
     const payment = new PaymentEntity();
@@ -83,7 +84,9 @@ export class OrdersService {
 
     const order = new OrderEntity();
     order.payment = payment;
-    order.moneyDiscount = voucher?.money ? voucher.money : 0;
+    order.moneyDiscount = voucher
+      ? voucher.money + totalMoneyDiscount
+      : totalMoneyDiscount;
 
     if (createOrderDto.id_user) {
       const customer = await this.storeService.findOneCustomer(
@@ -96,8 +99,10 @@ export class OrdersService {
     }
 
     order.quantityProduct = totalQuantity;
-    order.total = totalAmount;
+    order.total = totalPrice;
     order.timeBuy = new Date();
+    order.store = currentStore;
+    order.name = await (await hash(JSON.stringify(order), 10)).substring(0, 10);
 
     const orderTbl = await this.orderRepository.save(order);
 
@@ -105,16 +110,16 @@ export class OrdersService {
 
     let point: number;
 
-    for (let i = 0; i < createOrderDto.products.length; i++) {
+    for (const product of createOrderDto.products) {
       const orderProductEntity = new OrderProductEntity();
       orderProductEntity.order = order;
       const productAttribute = await this.productsService.findOneAttribute(
-        createOrderDto.products[i].id_attribute,
-        createOrderDto.products[i].id_product,
+        product.id_product,
+        product.id_attribute,
       );
 
       orderProductEntity.productAttribute = productAttribute;
-      orderProductEntity.quantity = createOrderDto.products[i].quantity;
+      orderProductEntity.quantity = product.quantity;
       orderProductEntity.discount = productAttribute.product.promotion
         ? Number(productAttribute.product.promotion.percentage)
         : 0;
@@ -134,6 +139,10 @@ export class OrdersService {
       }
 
       opEntity.push(orderProductEntity);
+      await this.productsService.updateAttribute(
+        product.id_attribute,
+        product.quantity,
+      );
     }
 
     if (createOrderDto.id_user) {
@@ -373,7 +382,7 @@ export class OrdersService {
 
   async findOne(id: string, currentStore: StoreEntity) {
     const order = await this.orderRepository.findOne({
-      where: { id: id, store_customer: { storeId: currentStore.id } },
+      where: { id: id, store: { id: currentStore.id } },
       relations: {
         payment: true,
         store_customer: {
@@ -388,6 +397,7 @@ export class OrdersService {
         },
       },
     });
+
     if (!order) throw new BadRequestException('Order not found');
     return order;
   }

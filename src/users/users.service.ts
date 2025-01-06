@@ -415,8 +415,6 @@ export class UsersService {
       order: { createdAt: 'DESC' },
     });
 
-    console.log(result);
-
     const totalPages = Math.ceil(total / limit);
 
     return {
