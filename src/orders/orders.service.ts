@@ -56,8 +56,14 @@ export class OrdersService {
         productAttribute.attribute.price * product.quantity * discount;
 
       totalQuantity += product.quantity;
-      totalMoneyDiscount +=
-        productAttribute.attribute.price * product.quantity * (1 - discount);
+
+      totalMoneyDiscount = parseFloat(
+        (
+          productAttribute.attribute.price *
+          product.quantity *
+          (1 - discount)
+        ).toFixed(2),
+      );
     }
 
     let voucher: VoucherEnity;
@@ -84,8 +90,9 @@ export class OrdersService {
 
     const order = new OrderEntity();
     order.payment = payment;
+
     order.moneyDiscount = voucher
-      ? voucher.money + totalMoneyDiscount
+      ? Number(voucher.money) + Number(totalMoneyDiscount)
       : totalMoneyDiscount;
 
     if (createOrderDto.id_user) {
@@ -102,7 +109,7 @@ export class OrdersService {
     order.total = totalPrice;
     order.timeBuy = new Date();
     order.store = currentStore;
-    order.name = await (await hash(JSON.stringify(order), 10)).substring(0, 10);
+    order.name = (await hash(JSON.stringify(order), 10)).substring(0, 10);
 
     const orderTbl = await this.orderRepository.save(order);
 
@@ -354,8 +361,8 @@ export class OrdersService {
 
     const [result, total] = await this.orderRepository.findAndCount({
       where: {
-        store_customer: {
-          storeId: currentStore.id,
+        store: {
+          id: currentStore.id,
         },
       },
       relations: {
@@ -373,7 +380,7 @@ export class OrdersService {
     const totalPages = Math.ceil(total / limit);
 
     return {
-      data: result,
+      items: result,
       currentPage: Number(page),
       totalPages: totalPages,
       totalItems: total,
