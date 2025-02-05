@@ -17,6 +17,7 @@ import { CreateProductAttributeDto } from './dto/create-product-attribute.dto';
 import { ProductsService } from './products.service';
 import { UpdateProductAttributeDto } from './dto/update-product-attribute.dto';
 import { StoreEntity } from 'src/store/entities/store.entity';
+import { UpdateAmountAttributeDto } from './dto/update-amount-attribute.dto';
 
 @Controller('products')
 @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.MODERATOR]))
@@ -82,6 +83,17 @@ export class ProductsController {
     @CurrentStore() currentStore: StoreEntity,
   ) {
     return this.productsService.findOneProductAttribute(id, currentStore);
+  }
+
+  @Patch('amount/attribute')
+  async updateAmountAttribute(
+    @Body() updateAmountAttributes: UpdateAmountAttributeDto[],
+    @CurrentStore() currentStore: StoreEntity,
+  ) {
+    return await this.productsService.updateAmountAttribute(
+      updateAmountAttributes,
+      currentStore,
+    );
   }
 
   @Patch(':id')

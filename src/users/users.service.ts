@@ -58,6 +58,12 @@ export class UsersService {
     //   emailVerificationToken,
     // );
 
+    // try {
+
+    // } catch (error) {
+
+    // }
+
     delete user.password;
     return await user;
   }
@@ -407,7 +413,6 @@ export class UsersService {
         },
       },
       relations: {
-        store: true,
         user: true,
       },
       skip,
@@ -442,6 +447,14 @@ export class UsersService {
     const store = await this.userStoreRepository.findOneBy({
       storeId: idStore,
       userId: currentUser.id,
+    });
+    if (!store) throw new BadRequestException('Store not found!');
+    return store;
+  }
+
+  async checkStore(idStore: string): Promise<any> {
+    const store = await this.userStoreRepository.findOneBy({
+      storeId: idStore,
     });
     if (!store) throw new BadRequestException('Store not found!');
     return store;

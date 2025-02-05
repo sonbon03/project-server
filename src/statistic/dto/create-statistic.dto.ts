@@ -1,6 +1,9 @@
-import { IsDate, IsNumber } from 'class-validator';
+import { IsDate, IsNumber, IsString } from 'class-validator';
 
 export class CreateStatisticDto {
+  @IsString()
+  storeId: string;
+
   @IsNumber()
   totalProducts: number;
 
@@ -9,6 +12,9 @@ export class CreateStatisticDto {
 
   @IsNumber({ maxDecimalPlaces: 2 })
   totalDiscount: number;
+
+  @IsNumber({ maxDecimalPlaces: 2 })
+  totalProfit: number;
 
   @IsNumber()
   totalOrders: number;

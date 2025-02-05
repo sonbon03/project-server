@@ -177,23 +177,22 @@ export class UsersController {
   }
 
   @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.MODERATOR]))
-  @Get('store/staff/:id')
-  async getStaffById(
-    @CurrentStore() currentStore: StoreEntity,
-    @Query('id') id: string,
-  ) {
-    return await this.usersService.getStaffById(id, currentStore);
-  }
-
-  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.MODERATOR]))
   @Get('store/staff/paginate')
   async getStaffPaginate(
     @CurrentStore() currentStore: StoreEntity,
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 10,
   ) {
-    console.log('getStaffPaginate');
     return await this.usersService.getStaffPaginate(page, limit, currentStore);
+  }
+
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.MODERATOR]))
+  @Get('store/staff/:id')
+  async getStaffById(
+    @CurrentStore() currentStore: StoreEntity,
+    @Query('id') id: string,
+  ) {
+    return await this.usersService.getStaffById(id, currentStore);
   }
 
   // @Get(':id')

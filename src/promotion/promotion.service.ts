@@ -169,7 +169,7 @@ export class PromotionService {
           throw new BadRequestException('Promotion not start yet');
         }
       });
-      return { data: promotions };
+      return promotions;
     }
   }
 
@@ -183,14 +183,21 @@ export class PromotionService {
     return await this.promotionRepository.delete(id);
   }
 
-  @Cron(CronExpression.EVERY_10_MINUTES)
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  // @Cron('*/5 * * * * *')
   async handleCheckTime() {
     const activePromotions = await this.promotionRepository.find();
 
     await Promise.all(
       activePromotions.map(async (promotion) => {
         try {
-          await this.checkTimePromotion(promotion.id);
+          const data = await this.checkTimePromotion(promotion.id);
+          if (data) {
+            data.map(async (item) => {
+              await this.productsService.removePromotionProducts(item.id);
+              await this.promotionRepository.delete(item.id);
+            });
+          }
         } catch (error) {
           throw new BadRequestException(
             `Error checking promotion with ID ${promotion.id}:`,

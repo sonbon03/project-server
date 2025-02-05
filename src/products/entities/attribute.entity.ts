@@ -28,6 +28,9 @@ export class AttributeEntity {
   @Column()
   description: string;
 
+  @Column({ nullable: true })
+  image: string;
+
   @Column()
   amount: number;
 
@@ -39,6 +42,9 @@ export class AttributeEntity {
 
   @Column({ type: 'decimal', precision: 10, scale: 3 })
   price: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 3, nullable: true })
+  priceImport: number;
 
   @CreateDateColumn()
   createdAt: Timestamp;

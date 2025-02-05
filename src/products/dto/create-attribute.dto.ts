@@ -9,6 +9,11 @@ export class CreateAttributeDto {
   value: string;
 
   @ApiProperty({})
+  @IsNotEmpty({ message: 'Image not be empty' })
+  @IsString()
+  iamge: string;
+
+  @ApiProperty({})
   @IsNotEmpty({ message: 'Key not be empty' })
   @Length(10)
   @IsString()
@@ -36,4 +41,8 @@ export class CreateAttributeDto {
   @ApiProperty({})
   @IsNotEmpty({ message: 'Description not be empty' })
   price: number;
+
+  @ApiProperty({})
+  @IsNotEmpty({ message: 'Price import not be empty' })
+  priceImport: number;
 }

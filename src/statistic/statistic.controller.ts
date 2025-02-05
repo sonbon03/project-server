@@ -99,4 +99,9 @@ export class StatisticController {
       currentStore,
     );
   }
+
+  @Get('/test')
+  async test() {
+    return await this.statisticService.getStatisticsForPreviousDay(new Date());
+  }
 }

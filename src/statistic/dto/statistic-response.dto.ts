@@ -6,6 +6,7 @@ export class StatisticResponseDto {
   totalRevenue: number;
   totalDiscount: number;
   totalOrders: number;
+  totalProfit: number;
   startDate: Date;
   endDate: Date;
   store?: StoreEntity;

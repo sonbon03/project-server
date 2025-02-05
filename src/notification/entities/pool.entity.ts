@@ -1,10 +1,8 @@
-import { UserEntity } from 'src/users/entities/user.entity';
 import {
   Column,
   CreateDateColumn,
   Entity,
   Index,
-  ManyToOne,
   PrimaryGeneratedColumn,
   Timestamp,
 } from 'typeorm';
@@ -25,7 +23,4 @@ export class PoolEntity {
 
   @CreateDateColumn()
   createdAt: Timestamp;
-
-  @ManyToOne(() => UserEntity, (user) => user.pools)
-  user: UserEntity;
 }

@@ -3,7 +3,6 @@ import { NotificationEntity } from 'src/notification/entities/notification.entit
 import { OrderEntity } from 'src/orders/entities/order.entity';
 import { ProductEntity } from 'src/products/entities/product.entity';
 import { PromotionEntity } from 'src/promotion/entities/promotion.entity';
-import { StatisticEntity } from 'src/statistic/entities/statistic.entity';
 import { UserStoreEntity } from 'src/users/entities/user-store.entity';
 import { VoucherEnity } from 'src/vouchers/entities/voucher.entity';
 import { WarehouseEntity } from 'src/warehouses/entities/warehouse.entity';
@@ -49,9 +48,6 @@ export class StoreEntity {
 
   @OneToMany(() => VoucherEnity, (vou) => vou.store)
   vouchers: VoucherEnity[];
-
-  @OneToMany(() => StatisticEntity, (statis) => statis.store)
-  statistics: StatisticEntity[];
 
   @OneToMany(() => NotificationEntity, (noti) => noti.store)
   notify: NotificationEntity[];

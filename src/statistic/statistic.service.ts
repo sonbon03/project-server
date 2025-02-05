@@ -8,6 +8,9 @@ import { StatisticEntity } from './entities/statistic.entity';
 import { UserEntity } from 'src/users/entities/user.entity';
 import { UsersService } from '../users/users.service';
 import { StoreEntity } from 'src/store/entities/store.entity';
+import { OrdersService } from 'src/orders/orders.service';
+import * as _ from 'lodash';
+import { ProductsService } from 'src/products/products.service';
 
 @Injectable()
 export class StatisticService {
@@ -15,6 +18,8 @@ export class StatisticService {
     @InjectRepository(StatisticEntity)
     private readonly statisticRepository: Repository<StatisticEntity>,
     private readonly usersService: UsersService,
+    private readonly ordersService: OrdersService,
+    private readonly productsService: ProductsService,
   ) {}
 
   async getStatisticsByWeek(
@@ -147,7 +152,6 @@ export class StatisticService {
         where: {
           startDate: startDate,
           endDate: endDate,
-          store: store,
         },
       });
 
@@ -163,11 +167,11 @@ export class StatisticService {
             id: statistic.id,
             totalProducts: statistic.totalProducts,
             totalRevenue: statistic.totalRevenue,
+            totalProfit: statistic.totalProfit,
             totalDiscount: statistic.totalDiscount,
             totalOrders: statistic.totalOrders,
             startDate: statistic.startDate,
             endDate: statistic.endDate,
-            store: statistic.store,
           },
         });
       });
@@ -184,7 +188,7 @@ export class StatisticService {
       where: {
         startDate: startDate,
         endDate: endDate,
-        store: currentStore,
+        storeId: currentStore.id,
       },
     });
 
@@ -198,9 +202,9 @@ export class StatisticService {
       totalRevenue: statistic.totalRevenue,
       totalDiscount: statistic.totalDiscount,
       totalOrders: statistic.totalOrders,
+      totalProfit: statistic.totalProfit,
       startDate: statistic.startDate,
       endDate: statistic.endDate,
-      store: statistic.store,
     }));
   }
 
@@ -214,89 +218,70 @@ export class StatisticService {
 
     for (const statistic of previousDayStatistics) {
       const createStatisticDto: CreateStatisticDto = {
-        totalProducts: statistic.totalProducts,
-        totalRevenue: statistic.totalRevenue,
-        totalDiscount: statistic.totalDiscount,
-        totalOrders: statistic.totalOrders,
+        storeId: statistic.storeId,
+        totalProducts: statistic.orders.quantity,
+        totalRevenue: statistic.orders.total,
+        totalDiscount: statistic.orders.moneyDiscount,
+        totalOrders: statistic.orders.totalOrders,
         startDate: yesterday,
         endDate: today,
+        totalProfit: statistic.orders.totalProfit,
       };
 
-      await this.createStatistic(createStatisticDto, statistic.store);
+      await this.createStatistic(createStatisticDto);
     }
   }
 
-  private async getStatisticsForPreviousDay(date: Date): Promise<
-    {
-      store: StoreEntity;
-      totalProducts: number;
-      totalRevenue: number;
-      totalDiscount: number;
-      totalOrders: number;
-    }[]
-  > {
+  async getStatisticsForPreviousDay(date: Date) {
     const previousDay = new Date(date);
-    previousDay.setDate(previousDay.getDate() - 1);
-    const startOfDay = new Date(previousDay);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(previousDay);
-    endOfDay.setHours(23, 59, 59, 999);
+    previousDay.setDate(previousDay.getDate() - 23);
 
-    const stores = await this.statisticRepository
-      .createQueryBuilder('statistic')
-      .select('statistic.storeId', 'storeId')
-      .distinct(true)
-      .getRawMany();
+    const orders = await this.ordersService.getOrderByDate(previousDay);
 
     const results = await Promise.all(
-      stores.map(async (store) => {
-        const totalOrders = await this.statisticRepository.count({
-          where: {
-            store: store,
-            startDate: startOfDay,
-            endDate: endOfDay,
-          },
-        });
+      _.chain(orders)
+        .groupBy('order.store.id')
+        .map(async (value) => {
+          const totalOrders = _.chain(value).groupBy('order.id').size().value();
+          const quantity = value.reduce((acc, item) => acc + item.quantity, 0);
+          const total = value.reduce(
+            (acc, item) => acc + item.price * item.quantity,
+            0,
+          );
+          const moneyDiscount = value.reduce(
+            (acc, item) =>
+              acc + (item.discount / 100) * item.price * item.quantity,
+            0,
+          );
 
-        const statistics = await this.statisticRepository
-          .createQueryBuilder('statistic')
-          .select('SUM(statistic.totalProducts)', 'totalProducts')
-          .addSelect('SUM(statistic.totalRevenue)', 'totalRevenue')
-          .addSelect('SUM(statistic.totalDiscount)', 'totalDiscount')
-          .where(
-            'statistic.store = :store AND statistic.startDate >= :start AND statistic.endDate <= :end',
-            {
-              store: store.store,
-              start: startOfDay,
-              end: endOfDay,
-            },
-          )
-          .getRawOne();
+          const profits = await Promise.all(
+            value.map(async (item) => {
+              console.log(item);
+              const productAttributeId =
+                await this.ordersService.findOrderProductById(item.id);
 
-        if (!statistics) {
+              const { price, profit } =
+                await this.productsService.profitByProductAttribute(
+                  productAttributeId.id,
+                );
+
+              return (profit - (item.discount / 100) * price) * item.quantity;
+            }),
+          );
+          const totalProfit = profits.reduce((acc, curr) => acc + curr, 0);
+
           return {
-            store: store.store,
-            totalProducts: 0,
-            totalRevenue: 0,
-            totalDiscount: 0,
-            totalOrders: totalOrders,
+            storeId: value[0].order.store.id,
+            orders: {
+              totalOrders,
+              quantity,
+              total,
+              moneyDiscount,
+              totalProfit,
+            },
           };
-        }
-
-        return {
-          store: store.store,
-          totalProducts: statistics.totalProducts
-            ? Number(statistics.totalProducts)
-            : 0,
-          totalRevenue: statistics.totalRevenue
-            ? Number(statistics.totalRevenue)
-            : 0,
-          totalDiscount: statistics.totalDiscount
-            ? Number(statistics.totalDiscount)
-            : 0,
-          totalOrders: totalOrders,
-        };
-      }),
+        })
+        .value(),
     );
 
     return results;
@@ -304,10 +289,8 @@ export class StatisticService {
 
   private async createStatistic(
     createStatisticDto: CreateStatisticDto,
-    currentStore: StoreEntity,
   ): Promise<StatisticResponseDto> {
     let statistic = this.statisticRepository.create(createStatisticDto);
-    statistic.store = currentStore;
     statistic = await this.statisticRepository.save(statistic);
 
     return {
@@ -316,9 +299,9 @@ export class StatisticService {
       totalRevenue: statistic.totalRevenue,
       totalDiscount: statistic.totalDiscount,
       totalOrders: statistic.totalOrders,
+      totalProfit: statistic.totalProfit,
       startDate: statistic.startDate,
       endDate: statistic.endDate,
-      store: statistic.store,
     };
   }
 }

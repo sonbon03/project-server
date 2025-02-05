@@ -1,5 +1,4 @@
-import { StoreEntity } from 'src/store/entities/store.entity';
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity({ name: 'statistics' })
 export class StatisticEntity {
@@ -9,11 +8,17 @@ export class StatisticEntity {
   @Column()
   totalProducts: number;
 
+  @Column({ nullable: true })
+  storeId: string;
+
   @Column({ type: 'decimal', precision: 15, scale: 2 })
   totalRevenue: number;
 
   @Column({ type: 'decimal', precision: 15, scale: 2 })
   totalDiscount: number;
+
+  @Column({ type: 'decimal', precision: 15, scale: 2 })
+  totalProfit: number;
 
   @Column()
   totalOrders: number;
@@ -23,7 +28,4 @@ export class StatisticEntity {
 
   @Column({ type: 'timestamp' })
   endDate: Date;
-
-  @ManyToOne(() => StoreEntity, (store) => store.statistics, { nullable: true })
-  store: StoreEntity;
 }

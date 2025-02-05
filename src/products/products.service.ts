@@ -1,9 +1,11 @@
 import {
   BadRequestException,
+  forwardRef,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { CategoriesService } from 'src/categories/categories.service';
 import { PromotionEntity } from 'src/promotion/entities/promotion.entity';
 import {
@@ -11,7 +13,7 @@ import {
   StatusPayment,
 } from 'src/utils/enums/user-status.enum';
 import { WarehousesService } from 'src/warehouses/warehouses.service';
-import { Repository } from 'typeorm';
+import { DataSource, QueryRunner, Repository } from 'typeorm';
 import { CreateAttributeDto } from './dto/create-attribute.dto';
 import { CreateProductAttributeDto } from './dto/create-product-attribute.dto';
 import { UpdateProductAttributeDto } from './dto/update-product-attribute.dto';
@@ -19,22 +21,38 @@ import { AttributeEntity } from './entities/attribute.entity';
 import { ProductAttributeEntity } from './entities/product-attribute.entity';
 import { ProductEntity } from './entities/product.entity';
 import { StoreEntity } from 'src/store/entities/store.entity';
+import { UpdateAmountAttributeDto } from './dto/update-amount-attribute.dto';
+import { CreatePoolDto } from 'src/notification/dto/create-pool.dto';
+import { NotificationService } from 'src/notification/notification.service';
+import { Transactional } from 'src/decorators/transaction.decorator';
 
 @Injectable()
 export class ProductsService {
   constructor(
     @InjectRepository(ProductEntity)
     private readonly productRepository: Repository<ProductEntity>,
+
     @InjectRepository(AttributeEntity)
     private readonly attributeRepository: Repository<AttributeEntity>,
+
     @InjectRepository(ProductAttributeEntity)
     private readonly productAttributeRepository: Repository<ProductAttributeEntity>,
+
     private readonly categoryService: CategoriesService,
+
     private readonly warehouseService: WarehousesService,
+
+    @Inject(forwardRef(() => NotificationService))
+    private readonly notificationService: NotificationService,
+
+    @InjectDataSource() private readonly _dataSource: DataSource,
   ) {}
+
+  @Transactional()
   async create(
     createProductAttributeDto: CreateProductAttributeDto,
     currentStore: StoreEntity,
+    queryRunner?: QueryRunner,
   ) {
     await Promise.all(
       createProductAttributeDto.attributes.map(async (attribute) => {
@@ -43,9 +61,12 @@ export class ProductsService {
             'Manufacture day must before expiry day',
           );
         }
+        if (attribute.priceImport > attribute.price) {
+          throw new BadRequestException('Price import must be less than price');
+        }
       }),
     );
-    const productEntity = new ProductEntity();
+    let productEntity = new ProductEntity();
     for (const attri of createProductAttributeDto.attributes) {
       const check = await this.findKey(attri.key, currentStore);
       if (check !== null) {
@@ -70,14 +91,21 @@ export class ProductsService {
     productEntity.importDay = new Date();
     productEntity.store = currentStore;
 
-    const productTbl = await this.productRepository.save(productEntity);
+    productEntity = this.productRepository.create(productEntity);
+
+    const productTbl = await queryRunner.manager.save(
+      ProductEntity,
+      productEntity,
+    );
+
     const attributeTbl: AttributeEntity[] = [];
     for (let i = 0; i < createProductAttributeDto.attributes.length; i++) {
-      const attribute = {
+      const data = {
         ...createProductAttributeDto.attributes[i],
         status: StatusAttibute.HAVE,
       };
-      const attri = await this.attributeRepository.save(attribute);
+      const attribute = this.attributeRepository.create(data);
+      const attri = await queryRunner.manager.save(AttributeEntity, attribute);
       attributeTbl.push(attri);
     }
 
@@ -87,15 +115,13 @@ export class ProductsService {
       const productAttributeEntity = new ProductAttributeEntity();
       productAttributeEntity.product = productTbl;
       productAttributeEntity.attribute = attributeTbl[i];
-      paEntity.push(productAttributeEntity);
+      const productAttribute = this.productAttributeRepository.create(
+        productAttributeEntity,
+      );
+      paEntity.push(productAttribute);
     }
-    await this.productAttributeRepository
-      .createQueryBuilder()
-      .insert()
-      .into(ProductAttributeEntity)
-      .values(paEntity)
-      .execute();
-    return await this.findOneProductAttribute(productTbl.id, currentStore);
+    await queryRunner.manager.save(ProductAttributeEntity, paEntity);
+    return true;
   }
 
   // ============================== BEGIN: Create PRODUCTS ==============================
@@ -241,6 +267,7 @@ export class ProductsService {
       take,
       order: { createdAt: 'DESC' },
     });
+
     const result = await Promise.all(
       products.map(async (product) => {
         const productAttribute = await this.findOneProductAttribute(
@@ -287,6 +314,43 @@ export class ProductsService {
     if (!attribute)
       throw new BadRequestException('Product attribute not found!');
     return attribute;
+  }
+
+  async getInfoAttribute(idAttribute: string) {
+    const attribute = await this.productAttributeRepository.findOne({
+      where: {
+        attribute: { id: idAttribute },
+      },
+      relations: {
+        product: true,
+        attribute: true,
+      },
+    });
+    if (!attribute) {
+      throw new BadRequestException('Attribute not found!');
+    }
+    return attribute;
+  }
+
+  async profitByProductAttribute(id: string) {
+    const attributeId = await this.productAttributeRepository.findOne({
+      where: { id },
+      relations: { attribute: true },
+    });
+    if (!attributeId) {
+      throw new BadRequestException('Product Attribute not found!');
+    }
+    const attribute = await this.attributeRepository.findOneById(
+      attributeId.attribute.id,
+    );
+    if (!attribute) {
+      throw new BadRequestException('Attribute not found!');
+    }
+
+    return {
+      price: attribute.price,
+      profit: attribute.price - attribute.priceImport,
+    };
   }
 
   async findOneProductAttribute(productId: string, currentStote: StoreEntity) {
@@ -375,6 +439,9 @@ export class ProductsService {
       store: { id: currentStore.id },
     });
     if (!product) throw new BadRequestException('Product not found!');
+    if (createAttributeDto.priceImport > createAttributeDto.price) {
+      throw new BadRequestException('Price import must be less than price');
+    }
     const attribute = await this.attributeRepository.save(
       this.attributeRepository.create(createAttributeDto),
     );
@@ -439,10 +506,10 @@ export class ProductsService {
     return true;
   }
 
-  async removePromotionProducts(idsPromotion: string) {
+  async removePromotionProducts(idPromotion: string) {
     const products = await this.productRepository.find({
       where: {
-        promotion: { id: idsPromotion },
+        promotion: { id: idPromotion },
       },
     });
     if (!products) {
@@ -474,7 +541,7 @@ export class ProductsService {
     return productAttri;
   }
 
-  async updateAttribute(idAttribute: string, quantity: number) {
+  async payAttribute(idAttribute: string, quantity: number) {
     const attribute = await this.attributeRepository.findOneById(idAttribute);
     if (!attribute) {
       throw new BadRequestException('Attribute not found');
@@ -485,5 +552,35 @@ export class ProductsService {
       throw new BadRequestException('Insufficient product');
     }
     return await this.attributeRepository.save(attribute);
+  }
+
+  async updateAmountAttribute(
+    updateAmountAttributes: UpdateAmountAttributeDto[],
+    currentStore: StoreEntity,
+  ) {
+    let message = [];
+    await Promise.all(
+      updateAmountAttributes.map(async (item: UpdateAmountAttributeDto) => {
+        const { id_attribute, amount } = item;
+        const attribute =
+          await this.attributeRepository.findOneById(id_attribute);
+        if (!attribute) {
+          throw new BadRequestException('Attribute not found');
+        }
+        attribute.amount += amount;
+        message = [...message, item];
+        await this.attributeRepository.save(attribute);
+      }),
+    );
+
+    if (message.length > 0) {
+      const poolData: CreatePoolDto = {
+        listStores: [currentStore.id],
+        title: 'Thêm sản phẩm',
+        message: JSON.stringify(message),
+      };
+      await this.notificationService.createPool(poolData);
+    }
+    return;
   }
 }

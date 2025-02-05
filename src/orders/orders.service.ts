@@ -10,7 +10,7 @@ import {
 } from 'src/utils/enums/user-status.enum';
 import { VoucherEnity } from 'src/vouchers/entities/voucher.entity';
 import { VouchersService } from 'src/vouchers/vouchers.service';
-import { Repository } from 'typeorm';
+import { Between, Repository } from 'typeorm';
 import { UsersService } from '../users/users.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdatePaymentStatusDto } from './dto/update-payment-status.dto';
@@ -18,14 +18,17 @@ import { OrderProductEntity } from './entities/order-product.entity';
 import { OrderEntity } from './entities/order.entity';
 import { PaymentEntity } from './entities/payment.entity';
 import { hash } from 'bcrypt';
+import { endOfDay, startOfDay } from 'date-fns';
 
 @Injectable()
 export class OrdersService {
   constructor(
     @InjectRepository(OrderProductEntity)
     private readonly orderProductRepository: Repository<OrderProductEntity>,
+
     @InjectRepository(OrderEntity)
     private readonly orderRepository: Repository<OrderEntity>,
+
     private readonly productsService: ProductsService,
     private readonly vouchersService: VouchersService,
     private readonly storeService: StoreService,
@@ -146,7 +149,7 @@ export class OrdersService {
       }
 
       opEntity.push(orderProductEntity);
-      await this.productsService.updateAttribute(
+      await this.productsService.payAttribute(
         product.id_attribute,
         product.quantity,
       );
@@ -165,178 +168,6 @@ export class OrdersService {
 
     return await this.findOne(orderTbl.id, currentStore);
   }
-
-  // ============================== BEGIN: Create ORDER ==============================
-
-  // async create(createOrderDto: CreateOrderDto, currentStore: StoreEntity) {
-  //   await this.validateProducts(createOrderDto);
-
-  //   const totalQuantity = this.calculateTotalQuantity(createOrderDto);
-  //   let totalAmount = this.calculateTotalAmount(createOrderDto);
-
-  //   if (createOrderDto.id_voucher) {
-  //     const voucher = await this.vouchersService.findOne(
-  //       createOrderDto.id_voucher,
-  //       currentStore,
-  //     );
-  //     totalAmount -= voucher?.money;
-  //   }
-
-  //   const order = await this.createOrderEntity(createOrderDto, currentStore);
-
-  //   const opEntity: OrderProductEntity[] =
-  //     await this.createOrderProductEntities(order, createOrderDto);
-
-  //   if (createOrderDto.id_user) {
-  //     const point = this.calculatePoint(opEntity);
-  //     await this.updateEmployeePoints(point, createOrderDto.id_user);
-  //   }
-
-  //   const orderTbl = await this.orderRepository.save(order);
-  //   await this.orderProductRepository
-  //     .createQueryBuilder()
-  //     .insert()
-  //     .into(OrderProductEntity)
-  //     .values(opEntity)
-  //     .execute();
-
-  //   return await this.findOne(orderTbl.id, currentStore);
-  // }
-
-  // async validateProducts(createOrderDto: CreateOrderDto) {
-  //   for (let i = 0; i < createOrderDto.products.length; i++) {
-  //     const productAttribute = await this.productsService.findOneAttribute(
-  //       createOrderDto.products[i].id_attribute,
-  //       createOrderDto.products[i].id_product,
-  //     );
-  //     await this.validateProductAttribute(productAttribute);
-  //   }
-  // }
-
-  // async validateProductAttribute(productAttribute: any) {
-  //   if (checkText(productAttribute.attribute.key)) {
-  //     throw new BadRequestException('The name contains special characters');
-  //   }
-  //   if (productAttribute.attribute.status === StatusAttibute.NOT) {
-  //     throw new BadRequestException('Product out of stock');
-  //   }
-  // }
-
-  // calculateTotalQuantity(createOrderDto: CreateOrderDto) {
-  //   return createOrderDto.products.reduce(
-  //     (sum, product) => sum + product.quantity,
-  //     0,
-  //   );
-  // }
-
-  // calculateTotalAmount(createOrderDto: CreateOrderDto) {
-  //   return createOrderDto.products.reduce(
-  //     (sum, product) => sum + product.price * product.quantity,
-  //     0,
-  //   );
-  // }
-
-  // async createOrderEntity(
-  //   createOrderDto: CreateOrderDto,
-  //   currentStore: StoreEntity,
-  // ) {
-  //   const order = new OrderEntity();
-  //   order.store = currentStore;
-  //   order.payment = new PaymentEntity();
-  //   Object.assign(order.payment, createOrderDto.payment);
-  //   order.payment.paymentDate = new Date();
-  //   order.payment.status =
-  //     createOrderDto.payment.paymentMethod === PaymentMethod.CASH ||
-  //     createOrderDto.payment.paymentMethod === PaymentMethod.CARD
-  //       ? StatusPayment.PAID
-  //       : StatusPayment.PENDING;
-  //   order.timeBuy = new Date();
-  //   order.quantityProduct = this.calculateTotalQuantity(createOrderDto);
-  //   order.total = this.calculateTotalAmount(createOrderDto);
-
-  //   if (createOrderDto.id_voucher) {
-  //     const voucher = await this.vouchersService.findOne(
-  //       createOrderDto.id_voucher,
-  //       currentStore,
-  //     );
-  //     order.moneyDiscount = voucher?.money || 0;
-  //   } else {
-  //     order.moneyDiscount = 0;
-  //   }
-
-  //   return order;
-  // }
-
-  // async createOrderProductEntities(
-  //   order: OrderEntity,
-  //   createOrderDto: CreateOrderDto,
-  // ) {
-  //   const opEntity: OrderProductEntity[] = [];
-  //   for (let i = 0; i < createOrderDto.products.length; i++) {
-  //     const productAttribute = await this.productsService.findOneAttribute(
-  //       createOrderDto.products[i].id_attribute,
-  //       createOrderDto.products[i].id_product,
-  //     );
-  //     const orderProductEntity = await this.createOrderProductEntity(
-  //       order,
-  //       productAttribute,
-  //       createOrderDto.products[i].quantity,
-  //     );
-  //     opEntity.push(orderProductEntity);
-  //   }
-  //   return opEntity;
-  // }
-
-  // async createOrderProductEntity(
-  //   order: OrderEntity,
-  //   productAttribute: any,
-  //   quantity: number,
-  // ) {
-  //   const orderProductEntity = new OrderProductEntity();
-  //   orderProductEntity.order = order;
-  //   orderProductEntity.productAttribute = productAttribute;
-  //   orderProductEntity.quantity = quantity;
-  //   orderProductEntity.discount = productAttribute.promotion
-  //     ? Number(productAttribute.promotion.percentage)
-  //     : 0;
-  //   const rawPrice = this.calculateProductPriceWithPromotion(productAttribute);
-  //   const price: number = Number(Math.round(rawPrice * 100) / 100);
-  //   orderProductEntity.price = price;
-  //   return orderProductEntity;
-  // }
-
-  // calculateProductPriceWithPromotion(productAttribute: any) {
-  //   if (productAttribute.promotion) {
-  //     const price =
-  //       productAttribute.attribute.price *
-  //       (1 - productAttribute.promotion.percentage / 100);
-  //     return price;
-  //   }
-  //   return productAttribute.attribute.price;
-  // }
-
-  // async updateEmployeePoints(point: number, idUser: string) {
-  //   await this.employeesService.updatePoint(point, idUser);
-  // }
-
-  // calculatePoint(opEntity: OrderProductEntity[]) {
-  //   let point: number = 0;
-  //   for (let i = 0; i < opEntity.length; i++) {
-  //     const orderProductEntity = opEntity[i];
-  //     if (orderProductEntity.price >= 100.0) {
-  //       point += parseFloat(
-  //         (
-  //           orderProductEntity.price *
-  //           orderProductEntity.quantity *
-  //           0.01
-  //         ).toFixed(3),
-  //       );
-  //     }
-  //   }
-  //   return point;
-  // }
-
-  // ============================== END: Create ORDER ==============================
 
   async findAll(currentStore: StoreEntity) {
     const order = this.orderRepository.find({
@@ -446,6 +277,35 @@ export class OrdersService {
     }
   }
 
+  async getOrderByDate(date: Date) {
+    const start = startOfDay(date);
+    const end = endOfDay(date);
+
+    const orders = await this.orderProductRepository.find({
+      where: {
+        createdAt: Between(start, end),
+      },
+      relations: {
+        order: {
+          store: true,
+        },
+      },
+    });
+    return orders;
+  }
+
+  async findOrderProductById(id: string) {
+    const orderProduct = await this.orderProductRepository.findOne({
+      where: { id },
+      relations: {
+        productAttribute: true,
+      },
+    });
+    if (!orderProduct) {
+      throw new BadRequestException('Order Product not found!');
+    }
+    return orderProduct.productAttribute;
+  }
   // async exportDataOrder(
   //   res: Response,
   //   currentStore: StoreEntity,

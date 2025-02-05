@@ -1,4 +1,3 @@
-import { PoolEntity } from 'src/notification/entities/pool.entity';
 import { Gender } from 'src/utils/enums/user-gender.enum';
 import { Roles } from 'src/utils/enums/user-roles.enum';
 import { Status } from 'src/utils/enums/user-status.enum';
@@ -68,9 +67,6 @@ export class UserEntity {
 
   @Column({ type: 'uuid', nullable: true })
   emailVerificationToken: string | null;
-
-  @OneToMany(() => PoolEntity, (pool) => pool.user)
-  pools: PoolEntity[];
 
   @OneToMany(() => UserStoreEntity, (userStore) => userStore.user)
   user_store: UserStoreEntity[];

@@ -5,12 +5,14 @@ import { UsersModule } from 'src/users/users.module';
 import { StatisticEntity } from './entities/statistic.entity';
 import { StatisticController } from './statistic.controller';
 import { StatisticService } from './statistic.service';
+import { ProductsModule } from 'src/products/products.module';
 
 @Module({
   imports: [
-    OrdersModule,
     TypeOrmModule.forFeature([StatisticEntity]),
+    OrdersModule,
     UsersModule,
+    ProductsModule,
   ],
   controllers: [StatisticController],
   providers: [StatisticService],
